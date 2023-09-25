@@ -73,7 +73,8 @@ classdef conZono < abstractZono
                         end
                 end                    
             else
-                error('Incorrect number of inputs.')
+                % warning('Incorrect number of inputs.')
+                obj.G = []; obj.c = []; obj.A = []; obj.b = [];
             end
             % Dimension compatibility checking
             try [obj.c obj.G];
