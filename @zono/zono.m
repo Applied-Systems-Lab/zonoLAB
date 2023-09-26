@@ -43,6 +43,9 @@ classdef zono < abstractZono
             elseif nargin == 1
                 obj.G = zeros(length(varargin{1}),0);
                 obj.c = varargin{1};
+            elseif nargin == 0 % empty constructor
+                [obj.Gc, obj.c] = deal([]);
+                return
             else
                 error('Incorrect number of inputs.')
             end

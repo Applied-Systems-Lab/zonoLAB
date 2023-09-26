@@ -40,6 +40,21 @@ elseif length(varargin) == 2
 end
 P = plotOptionsStruct(optPlot);
 
+% fixing missing for conzono/hybzono
+switch class(obj)
+    case 'conZono'
+        if isempty(obj.A) || isemtpy(obj.b)
+            obj = zono(obj.G, obj.c);
+        end
+    case 'hybZono'
+        if isempty(obj.Gb) || isepty(obj.Ab)
+            obj = conZono(obj.Gc, obj.c, obj.Ac, obj.b);
+            if isempty(obj.A) || isepty(obj.b)
+                obj = zono(obj.G, obj.c);
+            end
+        end
+end
+
 % Add cases for empty sets and sets with a single point %%%%%%%%%%%%%%%%%%
 if (obj.n > 3)
     disp(['Can only plot in 1, 2, or 3 dimensions.'])

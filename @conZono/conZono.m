@@ -71,10 +71,12 @@ classdef conZono < abstractZono
                         else
                             obj = hPoly2conZono(varargin{1});
                         end
-                end                    
+                end
+            elseif nargin == 0 % empty constructor
+                [obj.G, obj.c, obj.A, obj.b] = deal([]);
+                return
             else
-                % warning('Incorrect number of inputs.')
-                obj.G = []; obj.c = []; obj.A = []; obj.b = [];
+                error('Incorrect number of inputs.')
             end
             % Dimension compatibility checking
             try [obj.c obj.G];

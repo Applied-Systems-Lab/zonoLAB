@@ -97,6 +97,9 @@ classdef hybZono < abstractZono
                             obj = VPoly2hybZono(varargin{1});
                         end
                 end
+            elseif nargin == 0 % empty constructor
+                [obj.Gc, obj.Gb, obj.c, obj.Ac, obj.Ab, obj.b] = deal([]);
+                return
             else
                 error('Incorrect number of inputs.')
             end

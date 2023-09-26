@@ -99,7 +99,7 @@ classdef conZonoM < conZono
 
         function value = get.Z(obj)
             % Calculate conZono version
-            value = conZono();
+            value = conZono;
             value.G = obj.G;
             value.c = obj.c;
             value.A = obj.A;
