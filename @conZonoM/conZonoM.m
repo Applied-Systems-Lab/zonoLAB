@@ -30,12 +30,14 @@ classdef conZonoM < conZono
             % conZonoM Constructor
 
             % Define conZono as a superClass
-            obj = obj@conZono();            
+            % obj = obj@conZono();            
             if nargin == 1 || nargin == 2
-                obj.G = varargin{1}.G;
-                obj.c = varargin{1}.c;
-                obj.A = varargin{1}.A;
-                obj.b = varargin{1}.b;
+                in = varargin{1};
+                obj = conZono(in.G,in.c,in.A,in.b);
+                % obj.G = varargin{1}.G;
+                % obj.c = varargin{1}.c;
+                % obj.A = varargin{1}.A;
+                % obj.b = varargin{1}.b;
                 % obj.Z = varargin{1};
             elseif nargin > 2
                 obj.Z = conZono(varargin{1:end-1});
@@ -99,12 +101,12 @@ classdef conZonoM < conZono
 
         function value = get.Z(obj)
             % Calculate conZono version
-            value = conZono;
-            value.G = obj.G;
-            value.c = obj.c;
-            value.A = obj.A;
-            value.b = obj.b;
-            % value = conZono(obj.G,obj.c,obj.A,obj.b);
+            % value = conZono;
+            % value.G = obj.G;
+            % value.c = obj.c;
+            % value.A = obj.A;
+            % value.b = obj.b;
+            value = conZono(obj.G,obj.c,obj.A,obj.b);
         end
 
         function value = get.keys(obj)
