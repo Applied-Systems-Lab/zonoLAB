@@ -15,6 +15,6 @@ function keys = constructKeys(label, nums)
     if iscell(label); label = label{:}; end
     keys = {};
     for i = 1:length(nums)
-        keys{i} = [label, '_', num2str(nums(i))];
+        keys{i} = sprintf('%s_%d',label,nums(i));%[label, '_', num2str(nums(i))];
     end
 end

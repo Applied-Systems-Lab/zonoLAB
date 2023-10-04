@@ -9,10 +9,10 @@ function out = setIndividualKeys(~,value,n)
         else
             out = value;
         end
-    elseif isa(value,'string')
-        out = constructKeys(value,1:n);
     else
-        error('issues w/ constructor label')
+        out = constructKeys(value,1:n);
+    % else
+    %     error('issues w/ constructor label')
     end
     
     out = reshape(out,1,[]);

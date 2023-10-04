@@ -30,15 +30,15 @@ classdef conZonoM < conZono
             % conZonoM Constructor
 
             % Define conZono as a superClass
-            % obj = obj@conZono();            
+            obj = obj@conZono();            
             if nargin == 1 || nargin == 2
-                in = varargin{1};
-                obj = conZono(in.G,in.c,in.A,in.b);
+                % in = varargin{1};
+                % obj = conZono(in.G,in.c,in.A,in.b);
                 % obj.G = varargin{1}.G;
                 % obj.c = varargin{1}.c;
                 % obj.A = varargin{1}.A;
                 % obj.b = varargin{1}.b;
-                % obj.Z = varargin{1};
+                obj.Z = varargin{1};
             elseif nargin > 2
                 obj.Z = conZono(varargin{1:end-1});
             end
@@ -180,7 +180,7 @@ classdef conZonoM < conZono
         end
 
         function out = vertcat(varargin)
-            out = varargin{1}.copy();
+            out = varargin{1};%.copy();
             for i = 2:nargin
                 out = cartProd(out,varargin{i});
             end                

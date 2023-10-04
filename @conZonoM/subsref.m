@@ -19,10 +19,10 @@ function B = subsref(A, S)
             if isnumeric(k); k = A.conKeys(k); end
 
             % select parts to keep
-            B = A.copy();
-            B.c_dict = A.c_dict(i,1);
+            B = A;%.copy();
+            B.c_dict = A.c_dict(i,:);
             B.G_dict = A.G_dict(i,j);
             B.A_dict = A.A_dict(k,j);
-            B.b_dict = A.b_dict(k,1);
+            B.b_dict = A.b_dict(k,:);
     end
 end

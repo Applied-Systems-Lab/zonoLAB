@@ -43,7 +43,7 @@ P = plotOptionsStruct(optPlot);
 % fixing missing for conzono/hybzono
 switch class(obj)
     case 'conZono'
-        if isempty(obj.A) || isemtpy(obj.b)
+        if isempty(obj.A) || isempty(obj.b)
             obj = zono(obj.G, obj.c);
         end
     case 'hybZono'
