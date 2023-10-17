@@ -1,11 +1,15 @@
-classdef conTest < baseTest
+classdef conTest < abstractTest
 
     properties
+        G
+        c
         A
         b
     end
 
     properties (Dependent)
+        n
+        nG
         nC
     end
 
@@ -13,7 +17,8 @@ classdef conTest < baseTest
      methods
 
          function obj = conTest(G,c,A,b)
-             obj@baseTest(G,c);
+             obj.G = G;
+             obj.c = c;
              obj.A = A;
              obj.b = b;
          end

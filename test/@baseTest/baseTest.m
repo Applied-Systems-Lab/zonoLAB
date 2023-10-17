@@ -1,14 +1,26 @@
-classdef baseTest
-
-    properties
-        G
-        c
-    end
+classdef baseTest < abstractTest
 
     properties (Dependent)
-        n
-        nG
+        G
+        c
+        n (1,1)
+        nG (1,1)
     end
+    % properties
+    %     G
+    %     c
+    % end
+    % 
+    % properties (Dependent)
+    %     n
+    %     nG
+    % end
+    % 
+    % properties (Hidden)
+    %     A
+    %     b
+    %     nC
+    % end
 
     methods
         % operations
@@ -23,6 +35,7 @@ classdef baseTest
 
          % Constructors
          function obj = baseTest(G,c)
+
              obj.G = G;
              obj.c = c;
          end

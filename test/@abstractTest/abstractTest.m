@@ -1,23 +1,45 @@
-classdef abstractTest
+classdef (Abstract) abstractTest
 
-    properties (Abstract)
-        G
-        c
+    properties (Hidden)
+        Data_ %<- make this it's own class?
+        keys %<- make this it's own class?
     end
 
-    properties (Dependent)
-        n
-        nG
+    % properties (Abstract)
+    %     G
+    %     c
+    %     A
+    %     b
+    % end
+    % 
+    % properties (Abstract, Dependent)
+    %     n
+    %     nG
+    %     nC
+    % end
+
+    % methods (Abstract)
+    %     obj = minSum(obj1,obj2);
+    %     obj = linMap(obj1,obj2);
+    %     obj = intersect(obj1,obj2);
+    % end
+
+    methods
+        % set/get
+        function obj = set.Data_(obj,Data)
+            obj.Data_ = abstractTest.checkData(Data);
+        end
+
+
+        % operations
+        obj = plus(obj1,obj2)
     end
 
     methods
-        % operations
-        obj = plus(obj1,obj2)
-
-        % get/set functions
-        function n = get.n(obj); n = size(obj.G,1); end
-        function nG = get.nG(obj); nG = size(obj.G,2); end
-        function nC = get.nC(obj); nC = size(obj.A,1); end
+        function Data_ = checkData(Data)
+            Data_ = Data; % <- TODO: add dim check...
+        end
     end
+
 
 end

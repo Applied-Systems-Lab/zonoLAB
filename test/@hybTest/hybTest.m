@@ -1,10 +1,14 @@
 classdef hybTest < conTest
 
-    properties (Hidden)
+    properties (Dependent, Hidden)
         vset
+        G
+        c
     end
 
     properties (Dependent)
+        c
+        b
         Gc
         Gb
         Ac
