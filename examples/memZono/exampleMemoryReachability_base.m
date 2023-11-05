@@ -32,10 +32,10 @@ X_{1} = X_0; %<-- initial conditions
 X_all = X_{1}; rx{1} = ri + (1:n); ri = ri + n;
 
 % Time-evolution
-for k = 1:N
+for k = 1:N-1
     % Current Input
     U_{k} = U_nom;
-    X_all = extend_zonotope(X_all,U_{k}); ru{k} = ri + (1:p); ri = ri + p;
+    X_all = cartProd(X_all,U_{k}); ru{k} = ri + (1:p); ri = ri + p;
 
     % Step Update
     X_{k+1} = A*X_{k} + B*U_{k};
@@ -73,9 +73,9 @@ ylabel('$x_2$','Interpreter','latex');
 % Input Plots
 subplot(1,2,2);
 hold on;
-R = zeros(2,X_inter.n); R(1,ru{2}) = 1; R(2,ru{3}) = 1; %<--- figure out why this is weird
+R = zeros(2,X_inter.n); R(1,ru{1}) = 1; R(2,ru{2}) = 1; %<--- figure out why this is weird
 plot(R*X_inter,'b',0.6);
-plot(cartProd(U_{2}, U_{3}),'b',0.2);
+plot(cartProd(U_{1}, U_{2}),'b',0.2);
 drawnow
 hold off;
 
@@ -117,15 +117,15 @@ Z = conZono( [X_.G , zeros(nx,r_ngc_diff) ; zeros(ny,l_ngc_diff) , Y.G, ], ...
              [X_.b ; Y.b]);
 end
 
-% function [Z] = cartProd(X_,Y)
-% % Stacking two independent zonotopes. 
-% nx = size(X_.G,1);
-% ny = size(Y.G,1);
-% ncx = size(X_.A,1);
-% ncy = size(Y.A,1);
-% 
-% Z = conZono( [X_.G , zeros(nx,size(Y.G,2)) ; zeros(ny,size(X_.G,2)) , Y.G, ], ...
-%              [X_.c ; Y.c], ...
-%              [X_.A , zeros(ncx,size(Y.G,2)) ; zeros(ncy,size(X_.G,2)) , Y.A], ...
-%              [X_.b ; Y.b]);
-% end
+function [Z] = cartProd(X_,Y)
+% Stacking two independent zonotopes. 
+nx = size(X_.G,1);
+ny = size(Y.G,1);
+ncx = size(X_.A,1);
+ncy = size(Y.A,1);
+
+Z = conZono( [X_.G , zeros(nx,size(Y.G,2)) ; zeros(ny,size(X_.G,2)) , Y.G, ], ...
+             [X_.c ; Y.c], ...
+             [X_.A , zeros(ncx,size(Y.G,2)) ; zeros(ncy,size(X_.G,2)) , Y.A], ...
+             [X_.b ; Y.b]);
+end
