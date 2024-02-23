@@ -179,8 +179,7 @@ classdef memZono
 
         function obj = set.Z(obj,in)
             switch class(in)
-                case 'double'
-                    obj.G_ = zeros(size(in,1),0);
+                case {'double','sym','optim.problemdef.OptimizationVariable'}
                     obj.c_ = in;
                     obj.vset = [];
                 case 'zono'
@@ -357,13 +356,28 @@ classdef memZono
             if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:size(M,1)); end
             out = in.transform([],M,[],outDims);
         end
+        function out = directSum(varargin)
+            % Sum without dimensional awareness
+            out = varargin{1};
+            for i = 2:nargin
+                if varargin{i}.n ~= out.n; error('Input dimensions not compatible'); end
+                varargin{i}.dimKeys = out.dimKeys;
+                out = out.combine(varargin{i});
+            end
+        end
 
         %% Ploting
         plot(obj,dims,varargin);
 
         %% Overloading
         function out = plus(in1,in2)
-            out = in1.combine(in2);
+            % plus performs direct (dimensionsionally unaware) minkowski sum. Use horzcat for combine() functionality
+            if in1.n == in2.n
+                out = directSum(in1,in2);
+            else
+                error("Dimension sizes don't lineup")
+            end
+            % out = in1.combine(in2);
         end
         function out = mtimes(in1,in2)
             if isa(in2,'memZono')
