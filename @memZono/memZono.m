@@ -110,11 +110,17 @@ classdef memZono
             end
         end
 
-        % Copy constructor (allows relabeling dimension)
+        % Copy constructor (allows relabeling dimension and shifting of center)
+        % varargin{1} = dimLabels
+        % varargin{2} = center shift
         function out = copy(obj,varargin)
             out = obj;
-            if nargin >1
-                out.dimKeys = varargin{1};
+            switch nargin
+                case 2
+                    out.dimKeys = varargin{1}; 
+                case 3
+                    if ~isempty(varargin{1}); out.dimKeys = varargin{1}; end
+                    out.c = out.c + varargin{2};
             end
         end
 
@@ -359,7 +365,11 @@ classdef memZono
         % Additional Methods
         function out = linMap(in,M,outDims)
             if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:size(M,1)); end
-            out = in.transform([],M,[],outDims);
+            out = in;
+            out.G = M*in.G;
+            out.c = M*in.c;
+            out.dimKeys = outDims;
+            % out = in.transform([],M,[],outDims);
         end
         % function out = directSum(varargin)
         %     % Sum without dimensional awareness
@@ -376,7 +386,12 @@ classdef memZono
 
         %% Overloading
         function out = plus(in1,in2)
-            out = in1.combine(in2);
+            % if all([isa(in1,'memZono'),isa(in2,'memZono')])
+                out = in1.combine(in2);
+            % elseif all([isa(in1,'memZono'),size(in2)==[in1.n, 1]])
+                % out = in1.copy();
+                % out.c = in1.c + in2;
+            % end
         end
         function out = mtimes(in1,in2)
             if isa(in2,'memZono')
