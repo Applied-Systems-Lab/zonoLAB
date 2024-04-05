@@ -77,7 +77,7 @@ classdef memZono
         conKeys
     end
 
-    %% Constructor
+    %% Constructors
     methods
         function obj = memZono(varargin)
             if nargin == 1
@@ -108,8 +108,21 @@ classdef memZono
                 out.dimKeys = varargin{1};
             end
         end
+    end
+    methods (Static)
+        % Costruction based on name of base objects
+        function obj = varNameConstructor(varargin)
+            for i = 1:nargin
+                varName = inputname(i);
+                obj_{i} = memZono(varargin{i},varName);
+            end
+            obj = vertcat(obj_{:});
+        end
 
-    %% Get/Set Functions
+    end
+
+    %% Parameter Set/Read
+    methods
         % Matrices
         % Get Matrices
         function out = get.G(obj) 
@@ -148,10 +161,26 @@ classdef memZono
         % hybZono dims
         function nGc = get.nGc(obj); nGc = sum(obj.vset); end
         function nGb = get.nGb(obj); nGb = sum(~obj.vset); end
-        
-        % In/Out with base Zonotope
 
 
+        % Additional Propterties
+        function out = dimMin(obj,dims)
+            [~,x] = supportFunc(obj,dims,-eye(obj.n));
+            out = diag(x);
+        end
+        function out = dimMax(obj,dims)
+            [~,x] = supportFunc(obj,dims,eye(obj.n));
+            out = diag(x);
+        end
+        function [lb,ub] = dimBounds(obj,dims)
+            % lb = dimMax(obj,dims);
+            % ub = dimMin(obj,dims);
+            [lb,ub] = bounds(projection(obj,dims).Z);
+        end
+    end
+
+    %% In/Out with base Zonotope
+    methods
         % test if special
         function out = issym(obj)
             % tests if any are symbolic
@@ -414,8 +443,11 @@ classdef memZono
         % Projection is prodomenently defined for internal use - Use subsref (indexing) instead
         function out = projection(obj,dims) 
             if ~iscell(dims) % if not already in cell form
-                if strcmp(dims,'all'), dims = obj.dimKeys; end
-                % TODO: include a `starts with' functionality?
+                if strcmp(dims,'all')
+                    dims = obj.dimKeys; 
+                else
+                    dims = obj.keysStartsWith(dims).dimKeys;
+                end                
             end
             [~,idx] = ismember(dims,obj.dimKeys);
             keys_ = obj.keys;

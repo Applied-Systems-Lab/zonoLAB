@@ -59,16 +59,10 @@ classdef (Abstract) abstractZono < DisplayNonScalarObjectAsTable
     properties (Hidden,Dependent)
         ub
         lb
-        bounds
+        % bounds
     end
     % Getter/Setter
     methods
-        function out = get.bounds(obj)
-            bb = obj.boundingBox;
-            ub = bb.c + sum(abs(bb.G),2);
-            lb = bb.c - sum(abs(bb.G),2);
-            out = [lb,ub];
-        end
         function out = get.ub(obj)
             bb = obj.boundingBox;
             out = bb.c + sum(abs(bb.G),2);
@@ -76,6 +70,11 @@ classdef (Abstract) abstractZono < DisplayNonScalarObjectAsTable
         function out = get.lb(obj)
             bb = obj.boundingBox;
             out = bb.c - sum(abs(bb.G),2);
+        end
+        function [lb,ub] = bounds(obj)
+            bb = obj.boundingBox;
+            ub = bb.c + sum(abs(bb.G),2);
+            lb = bb.c - sum(abs(bb.G),2);
         end
     end
 
