@@ -101,18 +101,12 @@ classdef memZono
             end
         end
 
-        % Copy constructor (allows relabeling dimension and shifting of center)
-        % varargin{1} = dimLabels
-        % varargin{2} = center shift
+        % Copy constructor (allows relabeling dimension)
         function out = copy(obj,varargin)
             out = obj;
-            switch nargin
-                case 2
+            if nargin >1
                     out.dimKeys = varargin{1}; 
-                case 3
-                    if ~isempty(varargin{1}); out.dimKeys = varargin{1}; end
-                    out.c = out.c + varargin{2};
-            end
+                            end
         end
 
     %% Get/Set Functions
