@@ -78,4 +78,9 @@ classdef (Abstract) abstractZono < DisplayNonScalarObjectAsTable
         end
     end
 
+    %% Additional Overide Methods
+    methods
+        function out = linMap(in,M); out = mtimes(M,in); end
+    end
+
 end
