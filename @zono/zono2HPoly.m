@@ -35,11 +35,6 @@ function [C, d] = zono2HPoly(obj, varargin)
     if ~isempty(varargin)
         parallel = true;
     end
-
-    if nH > 1000000
-        disp('setting parallel to true')
-        parallel = true;
-    end
     
     if parallel
         if nH <= 1000000
