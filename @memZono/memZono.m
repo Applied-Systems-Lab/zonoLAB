@@ -104,8 +104,12 @@ classdef memZono
         % Copy constructor (allows relabeling dimension)
         function out = copy(obj,varargin)
             out = obj;
-            if nargin >1
+            if nargin == 2
+                warning('relabeling dimensions without specifying order (should be depreciated)')
                 out.dimKeys = varargin{1};
+            elseif nargin == 3
+                out = obj.projection(varargin{1});
+                out.dimKeys = varargin{2};
             end
         end
     end
@@ -391,9 +395,18 @@ classdef memZono
         obj = combine(obj1,obj2); % Minkowski Sum
 
         % Additional Methods
-        function out = linMap(in,M,outDims)
+        function out = linMap(in,M,varargin)
+            if isscalar(varargin)
+                inDims = in.dimKeys;
+                outDims = varargin{1}; 
+                warning('lack of inDims specification can cause issues with dimension ordering'); 
+            else
+                inDims = varargin{1};
+                outDims = varargin{2};
+            end
+            if ~iscell(inDims); inDims = memZono.genKeys(inDims,1:size(M,1)); end
             if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:size(M,1)); end
-            out = in.transform([],M,[],outDims);
+            out = in.transform([],M,inDims,outDims);
         end
         
         %% Ploting
@@ -430,7 +443,7 @@ classdef memZono
         % Extended minkowsi sum
         function obj = horzcat(varargin)
             obj = varargin{1};
-            for i = 2:nargin
+            for i = 2:nargin %<========= not efficient
                 obj = combine(obj,varargin{i});
             end
         end
@@ -440,14 +453,14 @@ classdef memZono
         % A = subsasgn(A,S,B); %<---- not completed
         
 
-        % Projection is prodomenently defined for internal use - Use subsref (indexing) instead
+        % Projection is defined for internal use - subsref (indexing) is simpilar syntax
         function out = projection(obj,dims) 
             if ~iscell(dims) % if not already in cell form
                 if strcmp(dims,'all')
                     dims = obj.dimKeys; 
                 else
                     dims = obj.keysStartsWith(dims).dimKeys;
-                end                
+                end
             end
             [~,idx] = ismember(dims,obj.dimKeys);
             keys_ = obj.keys;
