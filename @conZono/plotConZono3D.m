@@ -111,7 +111,7 @@ try
     indxPairs = [1 2; 1 3; 1 4; 2 3; 2 4; 3 4];
     coPlanar = zeros(6,1);
     for i = 1:6
-        coPlanar(i) = abs(det([foundVerts(2,:)-foundVerts(1,:);extreme(indxPairs(i,1),:)-foundVerts(1,:);extreme(indxPairs(i,2),:)-foundVerts(1,:)])) <= 1e-6;
+        coPlanar(i) = abs(det([foundVerts(2,:)-foundVerts(1,:);extreme(indxPairs(i,1),:)-foundVerts(1,:);extreme(indxPairs(i,2),:)-foundVerts(1,:)])) <= 1e-3;
     end
     if min(coPlanar) == 1 % A planar set in 3D
         indx = find(isNewVert,1);
@@ -247,12 +247,12 @@ function [foundVerts,isNew] = addIfNew(foundVerts,extreme,dir)
     end
     % Check if this is actually more extreme in the dir direction
     maxInDir = max(dir*foundVerts');
-    if dir*extreme' - maxInDir <= 1e-6 % Threshold
+    if dir*extreme' - maxInDir <= 1e-4 % Threshold
         return % Not more extreme than existing vertices
     end
     % Check if this is the same as a vertex already found
     minDiff = min(sum(abs(foundVerts-extreme),2));
-    if minDiff >= 1e-6 % Threshold
+    if minDiff >= 1e-4 % Threshold
         isNew = 1;
         foundVerts = [foundVerts;extreme];
     end
