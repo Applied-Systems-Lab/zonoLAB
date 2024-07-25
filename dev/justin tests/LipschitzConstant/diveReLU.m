@@ -3,6 +3,7 @@ clear; clc; close all;
 load('sincos_20_10_10.mat',"net","NN")
 load("leaf189singleton","vertices")
 load("leaf189CursorPoint.mat","cursor_info")
+load("vertciesAndFacets.mat")
 
 x = vertices;
 
@@ -73,19 +74,18 @@ tLen = 20;
 %% Graphing Leaves
 sp1 = subplot(2,1,1);
 
-load("vertciesAndFacets.mat")
 optPlot = plotOptions('Display','on','SolverOpts',{},'FaceColor',[1 0 0],'FaceAlpha',0.7);
 for leaf = 1 : length(Zi)
     subplot(2,1,1);
     plot(Zi{leaf},optPlot);
-    axis([-5 5 -5 5])
+    axis([-5 5 -5 5 -5 5])
     subplot(2,1,2);
     for i = 1 : length(layer)
         for j = 1 : length(layer{i})
             if(layer{i}(j) > 0)
-                p1 = plot(i,((j-1)*tLen/length(layer{i}))+(tLen/(2*length(layer{i}))),"k.", "MarkerSize",20);
+                p1 = plot(i,((j-1)*tLen/length(layer{i}))+(tLen/(2*length(layer{i}))),"o", "MarkerSize",10,'MarkerEdgeColor','k','MarkerFaceColor','g');
             else
-                p2 = plot(i,((j-1)*tLen/length(layer{i}))+(tLen/(2*length(layer{i}))),"r.", "MarkerSize",20);
+                p2 = plot(i,((j-1)*tLen/length(layer{i}))+(tLen/(2*length(layer{i}))),"o", "MarkerSize",10,'MarkerEdgeColor','k','MarkerFaceColor','r');
             end
             hold on
         end
