@@ -12,3 +12,4 @@ test.m
 *.synctex.gz
 *.ent
 *.out
+*.mat
