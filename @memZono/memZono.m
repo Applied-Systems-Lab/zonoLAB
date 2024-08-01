@@ -268,17 +268,21 @@ classdef memZono
         end
         function obj = set.factorKeys(obj,in)
             try obj.keys.factors = obj.keysCheck(in,obj.nG); 
-            catch; warning('factor key set issue');
+            catch
+                warning('factor key set issue (toc used as key)');
+                obj.keys.factors = obj.keysCheck(num2str(toc),obj.nG);
             end
         end
         function obj = set.dimKeys(obj,in)
             try obj.keys.dims = obj.keysCheck(in,obj.n);
-            catch; warning('dim key set issue'); 
+            catch; error('dim key set issue'); 
             end
         end
         function obj = set.conKeys(obj,in)
             try obj.keys.cons = obj.keysCheck(in,obj.nC);
-            catch; warning('con key set issue');
+            catch
+                warning('con key set issue (toc used as key)');
+                obj.keys.cons = obj.keysCheck(num2str(toc),obj.nC);
             end
         end
 
