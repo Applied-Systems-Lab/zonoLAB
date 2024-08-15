@@ -22,7 +22,7 @@
 %       zonoLAB classes but adds dimensional awareness and memory-encoding/ 
 %       preservation within the set operations.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-classdef memZono
+classdef memZono < matlab.mixin.CustomDisplay
 
     %% Data
     properties (Hidden) % Underlying data structure
@@ -33,7 +33,7 @@ classdef memZono
         vset    % vSet defining if generators are continous or discrete
     end
 
-    properties (Dependent)
+    properties (Dependent,Hidden)
         c       % Center (n x 1)
         b       % Constraint vector (nC x 1)
         G       % Generator matrix (n x nG)
@@ -59,7 +59,7 @@ classdef memZono
     end
 
     % I/O zono
-    properties (Dependent, Hidden)
+    properties (Dependent,Hidden)
         Z           % Export to a base-zonotope class
         baseClass   % Equivalent base-zonotope class
     end
@@ -71,7 +71,7 @@ classdef memZono
             'dims',[],...
             'cons',[])
     end
-    properties (Dependent)
+    properties (Dependent,Hidden)
         factorKeys
         dimKeys
         conKeys
@@ -345,7 +345,7 @@ classdef memZono
             if ~iscell(in); in = cellstr(in); end
             if length(in) == n
                 out = in; 
-            elseif length(in) == 1
+            elseif isscalar(in)
                 out{n} = [];
                 for i = 1:n
                     out{i} = sprintf('%s_%d',in{1},i);
@@ -513,4 +513,87 @@ classdef memZono
         end
 
     end
+
+
+
+    %% Display setup
+    % methods (Access = protected)
+    %     function propgrp = getPropertyGroups(obj)
+    %         if ~isscalar(obj)
+    %             propgrp = getPropertyGroups@matlab.mixin.CustomDisplay(obj);
+    %         else
+    %             sizeList = ["n","nG","nC"];
+    %             sizeTitle = "Size";
+    %             sizeGrp = matlab.mixin.util.PropertyGroup(sizeList,sizeTitle);
+    %             % bioList = ["Name","Department","JobTitle"];
+    %             % bioTitle = "Employee Bio";
+    %             % bioGrp = matlab.mixin.util.PropertyGroup(bioList,bioTitle);
+    %             % contactList = ["Email","Phone"];
+    %             % contactTitle = "Contact Info";
+    %             % contactGrp = matlab.mixin.util.PropertyGroup(contactList,contactTitle);
+    %             % propgrp = [bioGrp,contactGrp];
+    %             propgrp = [sizeGrp];
+    %         end
+    %     end
+    % end
+
+    properties (Dependent)
+        G__
+        c__
+        A__
+        b__
+        vset__
+        Gc__
+        Gb__
+        Ac__
+        Ab__
+    end
+    properties (Dependent)
+        factorKeys_
+        dimKeys_
+        conKeys_
+    end
+
+    methods
+        function out = get.G__(obj)
+            out = array2table(obj.G, RowNames=obj.dimKeys, VariableNames=obj.factorKeys); 
+        end
+        function out = get.c__(obj)
+            out = array2table(obj.c, RowNames=obj.dimKeys, VariableNames={'c'}); 
+        end
+        function out = get.A__(obj) 
+            out = array2table(obj.A,RowNames=obj.conKeys,VariableNames=obj.factorKeys); 
+        end
+        function out = get.b__(obj)
+            out = array2table(obj.b,RowNames=obj.conKeys, VariableNames={'b'}); 
+        end
+        function out = get.vset__(obj)
+            out = array2table(reshape(obj.vset,[],1),RowNames=obj.factorKeys,VariableNames={'vset'});
+        end
+
+        function out = get.Gc__(obj)
+            out = array2table(obj.Gc, RowNames=obj.dimKeys, VariableNames=obj.factorKeys(obj.vset)); 
+        end
+        function out = get.Gb__(obj)
+            out = array2table(obj.Gb, RowNames=obj.dimKeys, VariableNames=obj.factorKeys(~obj.vset)); 
+        end
+        function out = get.Ac__(obj) 
+            out = array2table(obj.Ac,RowNames=obj.conKeys,VariableNames=obj.factorKeys(obj.vset)); 
+        end
+        function out = get.Ab__(obj) 
+            out = array2table(obj.Ab,RowNames=obj.conKeys,VariableNames=obj.factorKeys(~obj.vset)); 
+        end
+
+        function out = get.factorKeys_(obj); out = reshape(obj.factorKeys,[],1); end
+        function out = get.dimKeys_(obj); out = reshape(obj.dimKeys,[],1); end
+        function out = get.conKeys_(obj); out = reshape(obj.conKeys,[],1); end
+
+    end
+
+
+
+
+
+
 end
+

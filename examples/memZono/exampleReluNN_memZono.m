@@ -7,7 +7,7 @@
 % Parameters
 % Load parameters from mat file
 % This neural network approximates the function f = cos(X1)+sin(X2) over the domain [-5,5]x[-5,5]
-load("../Neural_Networks/relu_sin_cos_2_20_10_10_1.mat");
+load(strcat("..",filesep,"Neural_Networks",filesep,"relu_sin_cos_2_20_10_10_1.mat"));
 
 % Plotting function over the trained dataset
 figure('Position',[0,0,1500,300])
