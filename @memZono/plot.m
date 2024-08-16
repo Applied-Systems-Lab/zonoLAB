@@ -14,7 +14,7 @@ function plot(obj,dims,varargin)
     elseif isnumeric(dims), dims = obj.dimKeys(dims);
     end
 
-    Z_ = obj.projection(dims).Z;
+    Z_ = obj.Z(dims);
     if Z_.n > 3, error('specify dims... too many to plot'); end
     plot(Z_,varargin{:});
 end
