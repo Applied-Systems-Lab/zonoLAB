@@ -49,7 +49,7 @@ function [s,x_out] = supportFunc(obj,dims,d_in)
     if all([isnumeric(obj),isnumeric(d)],"all")
         % [s,x] = projection(obj,dims).Z.supportFunc(d);
         for j = 1:size(d,2)
-            [s(:,j),x(:,j)] = obj.Z.supportFunc(d(:,j));
+            [s(:,j),x(:,j)] = obj.Z_.supportFunc(d(:,j));
         end
     else
         if issym(obj)

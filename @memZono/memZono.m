@@ -22,7 +22,7 @@
 %       zonoLAB classes but adds dimensional awareness and memory-encoding/ 
 %       preservation within the set operations.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-classdef memZono < abstractZono %& matlab.mixin.CustomDisplay
+classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
 
     %% Data
     properties (Hidden) % Underlying data structure
@@ -486,6 +486,7 @@ classdef memZono < abstractZono %& matlab.mixin.CustomDisplay
             error('Union not yet implimented')
             % obj = union(obj1,obj2);
         end
+
         function obj = cartProd(obj1,obj2,dims1,dims2)
             arguments
                 obj1 memZono
@@ -503,18 +504,18 @@ classdef memZono < abstractZono %& matlab.mixin.CustomDisplay
             warning('cartProd not implimented directly (uses merge w/ a check)... should reimpliment as vertcat and then overload cartProd() as vertcat');
         end
 
-        function out = boundingBox(obj,dims,lbl)
-            arguments
-                obj
-                dims = [];
-                lbl = [];
-            end
-            if isempty(dims); dims = obj.dimKeys; end
-            if isempty(lbl)
-                for i = 1:numel(dims); lbl{i} = append(dims{i},'_bb'); end
-            end
-            out = memZono(boundingBox(obj.Z(dims)),obj.projection(dims).dimKeys,lbl);
-        end
+        % function out = boundingBox(obj,dims,lbl)
+        %     arguments
+        %         obj
+        %         dims = [];
+        %         lbl = [];
+        %     end
+        %     if isempty(dims); dims = obj.dimKeys; end
+        %     if isempty(lbl)
+        %         for i = 1:numel(dims); lbl{i} = append(dims{i},'_bb'); end
+        %     end
+        %     out = memZono(boundingBox(obj.Z(dims)),obj.projection(dims).dimKeys,lbl);
+        % end
 
         % Extended intersection
         function obj = vertcat(varargin)
@@ -544,11 +545,6 @@ classdef memZono < abstractZono %& matlab.mixin.CustomDisplay
         function out = projection(obj,dims)
             if ~iscell(dims) % if not already in cell form
                 dims = obj.keysStartsWith(dims).dimKeys;
-                % if strcmp(dims,'all')
-                %     dims = obj.dimKeys; 
-                % else
-                %     dims = obj.keysStartsWith(dims).dimKeys;
-                % end
             end
             [~,idx] = ismember(dims,obj.dimKeys);
             keys_ = obj.keys; keys_.dims = dims;
@@ -556,17 +552,6 @@ classdef memZono < abstractZono %& matlab.mixin.CustomDisplay
         end
 
     end
-
-
-    properties 
-    end
-    methods 
-        function out = ub(obj,dims)
-            out = obj.Z(dims).ub;
-        end
-    end
-
-
 
     %% Display setup
     % methods (Access = protected)
