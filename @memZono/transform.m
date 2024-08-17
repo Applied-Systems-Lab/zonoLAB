@@ -127,17 +127,17 @@ function out = affineMap(in,b,M,inDims,outDims,options)
     end
 
     G_ = [ 
-        in.G(pass_idx,:); 
-        M*in.G(M_idx,:)
+        in.G_(pass_idx,:); 
+        M*in.G_(M_idx,:)
     ];
     c_ = [
-        in.c(pass_idx,:);
-        M*in.c(M_idx,:) + b
+        in.c_(pass_idx,:);
+        M*in.c_(M_idx,:) + b
     ];
     % only need to update the dimKeys - reordered and the mapped ones are relabeled
-    keys_ = in.keys;
+    keys_ = in.keys_;
     keys_.dims = [passDims,outDims];
     
-    % constraints, constraint keys, factor keys, and vset do not change
-    out = memZono(G_, c_, in.A, in.b, in.vset, keys_);
+    % constraints, constraint keys, factor keys, and vset_ do not change
+    out = memZono(G_, c_, in.A_, in.b_, in.vset_, keys_);
 end

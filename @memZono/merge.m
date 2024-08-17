@@ -44,27 +44,27 @@ function obj = merge(obj1,obj2,sharedDimLabels)
 
     %% Factor-based Memory Cartisian Product
     G_ = [
-        obj1.G(idxd1,idxk1), obj1.G(idxd1,idxks1), zeros(length(d1),length(k2));
-        zeros(length(d2),length(k1)), obj2.G(idxd2,idxks2), obj2.G(idxd2,idxk2)
+        obj1.G_(idxd1,idxk1), obj1.G_(idxd1,idxks1), zeros(length(d1),length(k2));
+        zeros(length(d2),length(k1)), obj2.G_(idxd2,idxks2), obj2.G_(idxd2,idxk2)
         ];
     c_ = [
-        obj1.c(idxd1,:);
-        obj2.c(idxd2,:)
+        obj1.c_(idxd1,:);
+        obj2.c_(idxd2,:)
         ];
     A_ = [
-        obj1.A(idxc1,idxk1), obj1.A(idxc1,idxks1), zeros(length(c1),length(k2));
-        zeros(length(c2),length(k1)), obj2.A(idxc2,idxks2), obj2.A(idxc2,idxk2);
+        obj1.A_(idxc1,idxk1), obj1.A_(idxc1,idxks1), zeros(length(c1),length(k2));
+        zeros(length(c2),length(k1)), obj2.A_(idxc2,idxks2), obj2.A_(idxc2,idxk2);
         ];
     b_ = [
-        obj1.b(idxc1,:);
-        obj2.b(idxc2,:);
+        obj1.b_(idxc1,:);
+        obj2.b_(idxc2,:);
         ];
 
     % hybrid Zono
-    if obj1.vset(idxks1) ~= obj2.vset(idxks2)
+    if obj1.vset_(idxks1) ~= obj2.vset_(idxks2)
         error('c/d factors not lining up');
     end
-    vset_ = [obj1.vset(idxk1),obj1.vset(idxks1),obj2.vset(idxk2)];
+    vset_ = [obj1.vset_(idxk1),obj1.vset_(idxks1),obj2.vset_(idxk2)];
 
     % Labeling
     keys_.factors = [k1,ks,k2];
@@ -82,16 +82,16 @@ function obj = merge(obj1,obj2,sharedDimLabels)
         
         % Interesecting Matrices
         G_ = [G_;
-            obj1.G(idxds1,idxk1), obj1.G(idxds1,idxks1), zeros(length(ds),length(k2));
+            obj1.G_(idxds1,idxk1), obj1.G_(idxds1,idxks1), zeros(length(ds),length(k2));
         ];
         c_ = [c_;
-            obj1.c(idxds1,:);
+            obj1.c_(idxds1,:);
         ];
         A_ = [A_; 
-            R*obj1.G(:,idxk1), R*obj1.G(:,idxks1)-obj2.G(idxds2,idxks2), -obj2.G(idxds2,idxk2) 
+            R*obj1.G_(:,idxk1), R*obj1.G_(:,idxks1)-obj2.G_(idxds2,idxks2), -obj2.G_(idxds2,idxk2) 
         ];
         b_ = [b_;
-            obj2.c(idxds2,:) - R*obj1.c;
+            obj2.c_(idxds2,:) - R*obj1.c_;
         ];
 
         % Labels
@@ -122,16 +122,16 @@ function obj = merge(obj1,obj2,sharedDimLabels)
 
     %% Shared Constraints
     if ~isempty(cs)
-        if all([isnumeric(obj1.A),isnumeric(obj2.A),isnumeric(obj1.b),isnumeric(obj2.b)])
-            if all(obj1.A(idxcs1,idxks1) ~= obj2.A(idxcs2,idxks2),'all') || all(obj1.b(idxcs1) ~= obj2.b(idxcs2),'all')
+        if all([isnumeric(obj1.A_),isnumeric(obj2.A_),isnumeric(obj1.b_),isnumeric(obj2.b_)])
+            if all(obj1.A_(idxcs1,idxks1) ~= obj2.A_(idxcs2,idxks2),'all') || all(obj1.b_(idxcs1) ~= obj2.b_(idxcs2),'all')
                     error('Shared Constraints are not identical')
             end
         end
         A_ = [A_;
-            zeros(length(cs),length(k1)), obj1.A(idxcs1,idxks1), zeros(length(cs),length(k2))
+            zeros(length(cs),length(k1)), obj1.A_(idxcs1,idxks1), zeros(length(cs),length(k2))
         ];
         b_ = [b_;
-            obj1.b(idxcs1,:)
+            obj1.b_(idxcs1,:)
         ];
         % Labeling
         keys_.cons = [keys_.cons,cs];

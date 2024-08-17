@@ -21,34 +21,34 @@ function obj = combine(obj1,obj2)
     [k1,ks,k2] = memZono.getUniqueKeys(obj1.factorKeys,obj2.factorKeys);
     [idxk1,idxks1,idxks2,idxk2] = memZono.getKeyIndices(obj1.factorKeys,obj2.factorKeys);
     % shared dimensions
-    [d1,ds,d2] = memZono.getUniqueKeys(obj1.dimKeys,obj2.dimKeys);
-    [idxd1,idxds1,idxds2,idxd2] = memZono.getKeyIndices(obj1.dimKeys,obj2.dimKeys);
+    [d1,ds,d2] = memZono.getUniqueKeys(obj1.keys_.dims,obj2.keys_.dims);
+    [idxd1,idxds1,idxds2,idxd2] = memZono.getKeyIndices(obj1.keys_.dims,obj2.keys_.dims);
     % shared constraints
     [c1,cs,c2] = memZono.getUniqueKeys(obj1.conKeys,obj2.conKeys);
     [idxc1,idxcs1,idxcs2,idxc2] = memZono.getKeyIndices(obj1.conKeys,obj2.conKeys);
 
     %% Factor-based Memory Cartesian Product
     G_ = [
-        obj1.G(idxd1,idxk1), obj1.G(idxd1,idxks1), zeros(length(d1),length(k2));
-        zeros(length(d2),length(k1)), obj2.G(idxd2,idxks2), obj2.G(idxd2,idxk2)
+        obj1.G_(idxd1,idxk1), obj1.G_(idxd1,idxks1), zeros(length(d1),length(k2));
+        zeros(length(d2),length(k1)), obj2.G_(idxd2,idxks2), obj2.G_(idxd2,idxk2)
         ];
     c_ = [
-        obj1.c(idxd1,:);
-        obj2.c(idxd2,:)
+        obj1.c_(idxd1,:);
+        obj2.c_(idxd2,:)
         ];
     A_ = [
-        obj1.A(idxc1,idxk1), obj1.A(idxc1,idxks1), zeros(length(c1),length(k2));
-        zeros(length(c2),length(k1)), obj2.A(idxc2,idxks2), obj2.A(idxc2,idxk2);
+        obj1.A_(idxc1,idxk1), obj1.A_(idxc1,idxks1), zeros(length(c1),length(k2));
+        zeros(length(c2),length(k1)), obj2.A_(idxc2,idxks2), obj2.A_(idxc2,idxk2);
         ];
     b_ = [
-        obj1.b(idxc1,:);
-        obj2.b(idxc2,:);
+        obj1.b_(idxc1,:);
+        obj2.b_(idxc2,:);
         ];
 
-    if obj1.vset(idxks1) ~= obj2.vset(idxks2)
+    if obj1.vset_(idxks1) ~= obj2.vset_(idxks2)
         error('c/d factors not lining up');
     end
-    vset_ = [obj1.vset(idxk1),obj1.vset(idxks1),obj2.vset(idxk2)];
+    vset_ = [obj1.vset_(idxk1),obj1.vset_(idxks1),obj2.vset_(idxk2)];
 
     % Labeling
     keys_.factors = [k1,ks,k2];
@@ -60,10 +60,10 @@ function obj = combine(obj1,obj2)
     if ~isempty(ds)
         % Matrices
         G_ = [G_;
-            obj1.G(idxds1,idxk1), obj1.G(idxds1,idxks1)+obj2.G(idxds2,idxks2), obj2.G(idxds2,idxk2);
+            obj1.G_(idxds1,idxk1), obj1.G_(idxds1,idxks1)+obj2.G_(idxds2,idxks2), obj2.G_(idxds2,idxk2);
         ];
         c_ = [c_;
-            obj1.c(idxds1,:)+obj2.c(idxds2,:);
+            obj1.c_(idxds1,:)+obj2.c_(idxds2,:);
         ];
         % Constraints do not change with Minkowski Sum
 
@@ -74,14 +74,14 @@ function obj = combine(obj1,obj2)
     %% Shared Constraints
     if ~isempty(cs)
         % TODO: The following if seems fragile.  Not clear constraints will always be exactly the same coefficients? (could be multiplied by a scalar?)
-        if all(obj1.A(idxcs1,idxks1) ~= obj2.A(idxcs2,idxks2),'all') || all(obj1.b(idxcs1) ~= obj2.b(idxcs2),'all')
+        if all(obj1.A_(idxcs1,idxks1) ~= obj2.A_(idxcs2,idxks2),'all') || all(obj1.b_(idxcs1) ~= obj2.b_(idxcs2),'all')
             error('Shared Constraints are not identical')
         end
         A_ = [A_;
-            zeros(length(cs),length(k1)), obj1.A(idxcs1,idxks1), zeros(length(cs),length(k2))
+            zeros(length(cs),length(k1)), obj1.A_(idxcs1,idxks1), zeros(length(cs),length(k2))
         ];
         b_ = [b_;
-            obj1.b(idxcs1,:)
+            obj1.b_(idxcs1,:)
         ];
 
         % Labeling

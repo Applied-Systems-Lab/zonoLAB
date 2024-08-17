@@ -35,11 +35,11 @@ function varargout = subsref(obj, S)
             j = getKeyIndices(j,obj.factorKeys);
             k = getKeyIndices(k,obj.conKeys);
 
-            G_ = obj.G(i,j);
-            c_ = obj.c(i,:);
-            A_ = obj.A(k,j);
-            b_ = obj.b(k,:);
-            vset_ = obj.vset(1,j);
+            G_ = obj.G_(i,j);
+            c_ = obj.c_(i,:);
+            A_ = obj.A_(k,j);
+            b_ = obj.b_(k,:);
+            vset_ = obj.vset_(1,j);
 
             if ischar(i)
                 keys_.dims = obj.dimKeys;
@@ -86,16 +86,16 @@ function out = addDimKeys(in,obj,lbl)
         sz = [obj.n,obj.nG,obj.nC];
         sz_ = [in.n,in.nG,max([0,in.nC])];
         if sz_ == sz %<== maintains same keys
-            out = memZono(in,obj.keys);
+            out = memZono(in,obj.keys_);
         elseif sz_ == [sz(1),sz(1),0]
-            obj.keys.factors = cellfun(@(key) strcat(key,'_',lbl),obj.keys.dims,UniformOutput=false); %<== factors same as dims for output
-            obj.keys.cons = [];
-            out = memZono(in,obj.keys);
+            obj.keys_.factors = cellfun(@(key) strcat(key,'_',lbl),obj.keys_.dims,UniformOutput=false); %<== factors same as dims for output
+            obj.keys_.cons = [];
+            out = memZono(in,obj.keys_);
         else
-            out = memZono(in,obj.keys.dims,'noMem'); %<== factors/constraint results lost
+            out = memZono(in,obj.keys_.dims,'noMem'); %<== factors/constraint results lost
         end
     elseif size(in,1) == obj.n
-        out = array2table(in,RowNames=obj.keys.dims);
+        out = array2table(in,RowNames=obj.keys_.dims);
     else
         warning('dimension maintance lost with method result')
     end
