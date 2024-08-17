@@ -301,8 +301,8 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
 
         % Create keys from a patern
-        function out = keysStartsWith(obj,pattern)
-            for field = string(fields(obj.keys_))'%{'dims','factors','cons'}
+        function keys_ = keysStartsWith(obj,pattern)
+            for field = string({'dims','factors','cons'})
                 keys_.(field) = {};
                 for i = 1:length(obj.keys_.(field))
                     if startsWith(obj.keys_.(field){i},pattern)
@@ -310,23 +310,22 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                     end
                 end
             end
-            out = memZono(obj,keys_);
-            % out.dimKeys = {};
+            % out.dims = {};
             % for i=1:length(obj.dimKeys)
             %     if startsWith(obj.dimKeys{i},pattern)
-            %         out.dimKeys = [out.dimKeys,obj.dimKeys{i}];
+            %         out.dims = [out.dims,obj.dimKeys{i}];
             %     end
             % end
-            % out.factorKeys = {};
+            % out.factors = {};
             % for i=1:length(obj.factorKeys)
             %     if startsWith(obj.factorKeys{i},pattern)
-            %         out.factorKeys = [out.factorKeys,obj.factorKeys{i}];
+            %         out.factors = [out.factors,obj.factorKeys{i}];
             %     end
             % end
-            % out.conKeys = {};
+            % out.cons = {};
             % for i=1:length(obj.conKeys)
             %     if startsWith(obj.conKeys{i},pattern)
-            %         out.conKeys = [out.conKeys,obj.conKeys{i}];
+            %         out.cons = [out.cons,obj.conKeys{i}];
             %     end
             % end
         end

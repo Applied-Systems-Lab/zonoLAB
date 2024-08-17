@@ -31,9 +31,9 @@ function varargout = subsref(obj, S)
             end
 
             % TODO: Need error handling here if key doesn't exist
-            i = getKeyIndices(i,obj.dimKeys);
-            j = getKeyIndices(j,obj.factorKeys);
-            k = getKeyIndices(k,obj.conKeys);
+            i = getKeyIndices(i,obj.keys_.dims);
+            j = getKeyIndices(j,obj.keys_.factors);
+            k = getKeyIndices(k,obj.keys_.cons);
 
             G_ = obj.G_(i,j);
             c_ = obj.c_(i,:);
@@ -41,23 +41,34 @@ function varargout = subsref(obj, S)
             b_ = obj.b_(k,:);
             vset_ = obj.vset_(1,j);
 
-            if ischar(i)
-                keys_.dims = obj.dimKeys;
-            else
-                keys_.dims = obj.dimKeys(i);
-            end
-            if ischar(j)
-                keys_.factors = obj.factorKeys;
-            else
-                keys_.factors = obj.factorKeys(j);
-            end
-            if ischar(k)
-                keys_.cons = obj.conKeys;
-            else
-                keys_.cons = obj.conKeys(k);
-            end
+            keys_.dims = obj.keys_.dims(i);
+            keys_.factors = obj.keys_.factors(j);
+            keys_.cons = obj.keys_.cons(k);
 
             varargout{1} = memZono(G_,c_,A_,b_,vset_,keys_);
+
+
+
+            % i = getKeyIndices(i,obj.dimKeys);
+            % j = getKeyIndices(j,obj.factorKeys);
+            % k = getKeyIndices(k,obj.conKeys);
+            % if ischar(i)
+            %     keys_.dims = obj.dimKeys;
+            % else
+            %     keys_.dims = obj.dimKeys(i);
+            % end
+            % if ischar(j)
+            %     keys_.factors = obj.factorKeys;
+            % else
+            %     keys_.factors = obj.factorKeys(j);
+            % end
+            % if ischar(k)
+            %     keys_.cons = obj.conKeys;
+            % else
+            %     keys_.cons = obj.conKeys(k);
+            % end
+
+            % varargout{1} = memZono(G_,c_,A_,b_,vset_,keys_);
     end
 end
 
@@ -70,7 +81,7 @@ function idx = getKeyIndices(in,keys)
             [~,idx] = ismember(in,keys);
         else
             if strcmp(in,':')
-                idx = ':';
+                idx = 1:numel(keys);%':';
             else
                 [~,idx] = ismember(in,keys);
                 if idx == 0 
