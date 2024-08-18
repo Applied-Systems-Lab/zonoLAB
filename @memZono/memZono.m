@@ -463,19 +463,34 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:numel(outDims)); end
             out = obj.projection(inDims);
             out.dimKeys = outDims;
-            % if nargin == 2
-            %     warning('relabeling dimensions without specifying order (should be depreciated)')
-            %     out.dimKeys = varargin{1};
-            % elseif nargin == 3
-            %     out = obj.projection(varargin{1});
-            %     out.dimKeys = varargin{2};
-            % end
         end
         
         %% Ploting
-        % plot(obj,dims,varargin);
+        plot(obj,dims,varargin);
 
-        %% Overloading ----------------------------
+
+        %% Indexing
+        B = subsref(A,S);
+        % A = subsasgn(A,S,B); %<---- not completed        
+
+        % Projection is defined for internal use - subsref (indexing) is simpilar syntax
+        function out = projection(obj,dims)
+            if ~iscell(dims) % if not already in cell form
+                dims = obj.keysStartsWith(dims).dims;
+            end
+            [~,idx] = ismember(dims,obj.dimKeys);
+            keys_ = obj.keys_; keys_.dims = dims;
+            out = memZono(obj.G_(idx,:),obj.c_(idx,:),obj.A_,obj.b_,obj.vset_,keys_);
+        end
+
+        % dimAwareFun
+        varargout = dimAwareFun(obj,fun,dimIn,dimOut,lbl,options);
+
+
+    end
+
+    %% Overloading ----------------------------
+    methods
         function out = plus(in1,in2)
             out = in1.combine(in2);
         end
@@ -483,61 +498,57 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             if isa(in2,'memZono')
                 out = in2.transform([],in1); %<== flip the syntax order
             else
-                error('mtimes only overloaded for direction')
+                error('mtimes only overloaded for one direction')
             end
         end
         function out = and(obj1,obj2)
-            out = merge(obj1,obj2);
+            out = merge(obj1,obj2,'_and');
         end
         function obj = or(obj1,obj2)
             error('Union not yet implimented')
             % obj = union(obj1,obj2);
-        end       
+        end
 
-        % Extended intersection
+        % vertcat (Extended cartProd)
         function obj = vertcat(varargin)
             warning('vertcat is not efficient yet')
             obj = varargin{1};
             for i = 2:nargin %<========= not efficient
-                % obj = merge(obj,varargin{i});
                 obj = cartProd(obj,varargin{i});
             end
         end
-
-        % Extended minkowsi sum
+        % horzcat not yet decided (union? sum?)
         function obj = horzcat(varargin)
             error('horzcat not defined')
-            % obj = varargin{1};
-            % for i = 2:nargin %<========= not efficient
-            %     obj = combine(obj,varargin{i});
-            % end
         end
-
-        %% Indexing
-        B = subsref(A,S);
-        % A = subsasgn(A,S,B); %<---- not completed
-        
-
-        % Projection is defined for internal use - subsref (indexing) is simpilar syntax
-        function out = projection(obj,dims)
-            if ~iscell(dims) % if not already in cell form
-                dims = obj.keysStartsWith(dims).dimKeys;
+    end
+    methods (Static)
+        % sum (extended plus)
+        function obj = sum(varargin)
+            obj = varargin{1};
+            for i = 2:nargin %<========= not efficient
+                obj = plus(obj,varargin{i});
             end
-            [~,idx] = ismember(dims,obj.dimKeys);
-            keys_ = obj.keys_; keys_.dims = dims;
-            out = memZono(obj.G_(idx,:),obj.c_(idx,:),obj.A_,obj.b_,obj.vset_,keys_);
         end
-
+        % all (extended and)
+        function obj = all(varargin)
+            obj = varargin{1};
+            for i = 2:nargin %<========= not efficient
+                obj = merge(obj,varargin{2},sprintf('_all_%d',i));
+            end
+        end
+        % any (extended or)
+        function obj = any(varargin)
+            obj = varargin{1};
+            for i = 2:nargin %<========= not efficient
+                obj = or(obj,varargin{2});
+            end
+        end
     end
 
     %% Input/Output and Display
-    % properties (Dependent)
-    %     factorKeys_
-    %     dimKeys_
-    %     conKeys_
-    % end
-
     methods
+        % zono data as tables
         function out = get.G(obj)
             out = array2table(obj.G_, RowNames=obj.dimKeys, VariableNames=obj.factorKeys); 
         end
@@ -554,6 +565,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             out = array2table(reshape(obj.vset_,[],1),RowNames=obj.factorKeys,VariableNames={'vset_'});
         end
 
+        %% Hybzono versions as tables
         function out = get.Gc(obj)
             out = array2table(obj.Gc_, RowNames=obj.dimKeys, VariableNames=obj.factorKeys(obj.vset_)); 
         end
@@ -566,11 +578,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function out = get.Ab(obj) 
             out = array2table(obj.Ab_,RowNames=obj.conKeys,VariableNames=obj.factorKeys(~obj.vset_)); 
         end
-
-        % function out = get.factorKeys_(obj); out = reshape(obj.factorKeys,[],1); end
-        % function out = get.dimKeys_(obj); out = reshape(obj.dimKeys,[],1); end
-        % function out = get.conKeys_(obj); out = reshape(obj.conKeys,[],1); end
-
     end
 
 
