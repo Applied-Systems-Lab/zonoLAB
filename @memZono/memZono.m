@@ -476,11 +476,15 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         % Projection is defined for internal use - subsref (indexing) is simpilar syntax
         function out = projection(obj,dims)
             if ~iscell(dims) % if not already in cell form
-                dims = obj.keysStartsWith(dims).dims;
+                if strcmp(dims,':')
+                    dims = obj.dimKeys;
+                else
+                    dims = obj.keysStartsWith(dims).dims;
+                end
             end
             [~,idx] = ismember(dims,obj.dimKeys);
-            keys_ = obj.keys_; keys_.dims = dims;
-            out = memZono(obj.G_(idx,:),obj.c_(idx,:),obj.A_,obj.b_,obj.vset_,keys_);
+            keys_out = obj.keys_; keys_out.dims = dims;
+            out = memZono(obj.G_(idx,:),obj.c_(idx,:),obj.A_,obj.b_,obj.vset_,keys_out);
         end
 
         % dimAwareFun
@@ -519,7 +523,11 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
         % horzcat not yet decided (union? sum?)
         function obj = horzcat(varargin)
-            error('horzcat not defined')
+            if nargin == 1
+                obj = varargin{1};
+            else
+                error('horzcat not defined');
+            end
         end
     end
     methods (Static)
@@ -556,9 +564,11 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             out = array2table(obj.c_, RowNames=obj.dimKeys, VariableNames={'c'}); 
         end
         function out = get.A(obj) 
+            if obj.nC == 0, out = []; return; end
             out = array2table(obj.A_,RowNames=obj.conKeys,VariableNames=obj.factorKeys); 
         end
         function out = get.b(obj)
+            if obj.nC == 0, out = []; return; end
             out = array2table(obj.b_,RowNames=obj.conKeys, VariableNames={'b'}); 
         end
         function out = get.vset(obj)
@@ -567,16 +577,34 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
 
         %% Hybzono versions as tables
         function out = get.Gc(obj)
-            out = array2table(obj.Gc_, RowNames=obj.dimKeys, VariableNames=obj.factorKeys(obj.vset_)); 
+            out = obj.G(:,obj.keys.factors(obj.vset_));
+            % out = array2table(obj.Gc_, RowNames=obj.dimKeys, VariableNames=obj.factorKeys(obj.vset_)); 
         end
         function out = get.Gb(obj)
-            out = array2table(obj.Gb_, RowNames=obj.dimKeys, VariableNames=obj.factorKeys(~obj.vset_)); 
+            if obj.nGb > 0
+                out = obj.G(:,obj.keys.factors(~obj.vset_));
+            else
+                out = [];
+            end                
+            % if ~all(obj.vset_); out = []; return; end
+            % out = array2table(obj.Gb_, RowNames=obj.dimKeys, VariableNames=obj.factorKeys(~obj.vset_)); 
         end
-        function out = get.Ac(obj) 
-            out = array2table(obj.Ac_,RowNames=obj.conKeys,VariableNames=obj.factorKeys(obj.vset_)); 
+        function out = get.Ac(obj)
+            if obj.nC > 0
+                out =  obj.A(:,obj.keys.factors(obj.vset_));
+            else
+                out = [];
+            end
+            % out = array2table(obj.Ac_,RowNames=obj.conKeys,VariableNames=obj.factorKeys(obj.vset_)); 
         end
         function out = get.Ab(obj) 
-            out = array2table(obj.Ab_,RowNames=obj.conKeys,VariableNames=obj.factorKeys(~obj.vset_)); 
+            if obj.nGb > 0 && obj.nC > 0
+                out = obj.A(:,obj.keys.factors(~obj.vset_));
+            else
+                out = [];
+            end
+            % if ~all(obj.vset_); out = []; return; end
+            % out = array2table(obj.Ab_,RowNames=obj.conKeys,VariableNames=obj.factorKeys(~obj.vset_)); 
         end
     end
 

@@ -81,7 +81,7 @@ function idx = getKeyIndices(in,keys)
             [~,idx] = ismember(in,keys);
         else
             if strcmp(in,':')
-                idx = 1:numel(keys);%':';
+                idx = 1:numel(keys);
             else
                 [~,idx] = ismember(in,keys);
                 if idx == 0 

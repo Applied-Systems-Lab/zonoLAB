@@ -27,7 +27,7 @@ X_all = X_{1};
 % Terminal Set
 X_F = memZono(X_F,sprintf('x_%d',N));
 
-switch 'withOverload' %'withOverload' 'transform&merge' 'fullStack'
+switch 'fullStack' %'withOverload' 'transform&merge' 'fullStack'
     case 'withOverload'
         % Time-evolution
         for k = 1:N-1
@@ -50,53 +50,41 @@ switch 'withOverload' %'withOverload' 'transform&merge' 'fullStack'
         X_inter = X_all.merge(X_F,'terminal_cons'); %<-- merge does the intersection
 
     case 'transform&merge'
+        lbl_ = @(x,k) sprintf('%s_%d',x,k);
         % Time-evolution
         for k = 1:N-1
             % Current Input
+            % U_{k} = memZono(U_nom,lbl_('u',k));
             U_{k} = memZono(U_nom,sprintf('u_%d',k));
 
             % Step Update
-            newDims = {sprintf('x_%d_1',k+1),sprintf('x_%d_2',k+1)};
-            X_{k+1} = X_{k}.transform(U_{k}.transform([],B,{},newDims),A,{},newDims); %<== transform has affine A x + B
-
+            newDims = memZono.genKeys(lbl_('x',k+1),1:n);
+            % newDims = {sprintf('x_%d_1',k+1),sprintf('x_%d_2',k+1)};
+            X_{k+1} = X_{k}.transform(...
+                U_{k}.transform([],B,U_{k}.dimKeys,newDims),A,...
+                X_{k}.dimKeys,newDims); %<== transform has affine A x + B
+            
             % Save Data
             X_all = X_all.merge(U_{k});
             X_all = X_all.merge(X_{k+1});
         end
         X_inter = X_all.merge(X_F,'terminal_cons'); % <--- intersect common dimensions
 
-
     case 'fullStack'
         % Label Functions
         xLabels = @(k) memZono.genKeys(sprintf('x_%d',k),1:n);
         % uLabels = @(k) memZono.genKeys(sprintf('u_%d',k),1:m);
-        uLabels = @(k) {sprintf('u_%d',k)}; %<== 1D u_k
+        uLabels = @(k) {sprintf('u_%d',k)}; %<== 1D u_k (override for plotting)
 
         % Time-Evolution
         for k = 1:N-1
             % Current Input
             X_all = X_all.merge(memZono(U_nom,uLabels(k)));
 
-            % Step Update
-            % switch 'indirectTransform' % 'directTransform' 'indirectTransform' 'combineTransform' 'overloading'
-            %     case 'directTransform'
-            % X_all = X_all.combine(...
-            %     X_all.transform( ...
-            %         transform(X_all(uLabels(k)),[],B,uLabels(k),xLabels(k)),...
-            %         A, xLabels(k), xLabels(k+1))...
-            %             );
-            % 
-            %     case 'combineTransform'
-            % X_all = horzcat(X_all,...
-            %     X_all.transform([],A,xLabels(k),xLabels(k+1)),...
-            %         X_all.transform([],B,uLabels(k),xLabels(k+1))...
-            % );
-                % case 'overloading'
-            
             % subsref(), linMap(), plus()
             X_all = [X_all;
-                linMap(X_all(xLabels(k)),A,xLabels(k+1))... 
-                    + linMap(X_all(uLabels(k)),B,xLabels(k+1));
+                linMap(X_all(xLabels(k)),A,xLabels(k),xLabels(k+1))... 
+                    + linMap(X_all(uLabels(k)),B,uLabels(k),xLabels(k+1));
             ];
 
             % end
@@ -104,11 +92,13 @@ switch 'withOverload' %'withOverload' 'transform&merge' 'fullStack'
 
         X_inter = X_all.merge(X_F,'terminal_cons');
 
-        for k = 1:N-1
-            X_{k} = X_all(xLabels(k));
-            U_{k} = X_all(uLabels(k));
-        end
-        X_{N} = X_all(xLabels(N));
+        X_ = arrayfun(@(k) X_all(xLabels(k)),1:N,UniformOutput=false);
+        U_ = arrayfun(@(k) X_all(uLabels(k)),1:N-1,UniformOutput=false);
+        % for k = 1:N-1
+        %     X_{k} = X_all(xLabels(k));
+        %     U_{k} = X_all(uLabels(k));
+        % end
+        % X_{N} = X_all(xLabels(N));
 
 end
 
@@ -118,11 +108,11 @@ fig = figure;
 % State plots
 subplot(1,2,1);
 hold on;
-plot(X_F, 'all', 'g', 1);
+plot(X_F, 'g', 1);
 drawnow;
 for k = 1:N
-    plot(X_inter, {sprintf('x_%d_1',k),sprintf('x_%d_2',k)}, selectColor(k), 0.6);
-    plot(X_{k}, 'all', selectColor(k), 0.2);
+    plot(X_inter({sprintf('x_%d_1',k),sprintf('x_%d_2',k)}), selectColor(k), 0.6);
+    plot(X_{k}, selectColor(k), 0.2);
     drawnow;
 end
 hold off;
@@ -137,8 +127,8 @@ ylabel('$x_2$','Interpreter','latex');
 % Input Plots
 subplot(1,2,2);
 hold on;
-plot([U_{1}; U_{2}],'all','b',0.2);
-plot(X_inter,{'u_1','u_2'},'b',0.6);
+plot([U_{1}; U_{2}],'b',0.2);
+plot(X_inter({'u_1','u_2'}),'b',0.6);
 drawnow
 hold off;
 
