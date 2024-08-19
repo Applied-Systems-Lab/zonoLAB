@@ -465,10 +465,8 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             out.dimKeys = outDims;
         end
         
-        %% Ploting
-        plot(obj,dims,varargin);
-
-
+    end
+    methods
         %% Indexing
         B = subsref(A,S);
         % A = subsasgn(A,S,B); %<---- not completed        
@@ -487,9 +485,18 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             out = memZono(obj.G_(idx,:),obj.c_(idx,:),obj.A_,obj.b_,obj.vset_,keys_out);
         end
 
+    end
+
+    %% direct overide/expansion of abstractZono methods to dimAware versions
+    methods
+        %% Ploting
+        plot(obj,varargin);
+
         % dimAwareFun
         varargout = dimAwareFun(obj,fun,dimIn,dimOut,lbl,options);
 
+        % boundingBox
+        
 
     end
 
