@@ -6,8 +6,8 @@
 %       out = transform(X,[],M)       <= out = M*X
 %       out = transform(X,b,[])       <= out = X + b
 %       out = transform(X,b,M)     <= out = M*X + b
-%       out = transform(X,Y,[])       <= out = combine(X,Y)
-%       out = transform(X,Y,M)     <= out = combine(M*X,Y)
+%       out = transform(X,Y,[])       <= out = memAnd(X,Y)
+%       out = transform(X,Y,M)     <= out = memAnd(M*X,Y)
 %   Inputs:
 %       X       - memZono in R^n
 %       b or Y  - vector in R^m or memZono in R^m
@@ -22,7 +22,7 @@
 %   Outputs:
 %       Z - memZono in R^m
 %           Affine transformation M*X+b is applied to the inDims dimensions
-%           If Y memZono is specified, then combine(M*X,Y) is returned
+%           If Y memZono is specified, then memAnd(M*X,Y) is returned
 %   Notes:
 %       
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -93,7 +93,7 @@ function obj = transform(obj1,obj2,M, inDims, outDims, options)
 
     %% Operation Logic
     if isa(obj2,'memZono') % <-- thus minkowski sum
-        obj = combine(affineMap(obj1,[],M,inDims,outDims,options),obj2); % <-- M Z \oplus Y
+        obj = memAnd(affineMap(obj1,[],M,inDims,outDims,options),obj2); % <-- M Z \oplus Y
     else % <-- thus a vector sum
         obj = affineMap(obj1,obj2,M,inDims,outDims,options); % <-- M Z + b
     end

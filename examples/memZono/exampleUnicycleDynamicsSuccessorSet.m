@@ -31,19 +31,19 @@ end
 Z = evolveUnicycleMemZono(sinZono,cosZono,v,U,Z0,N);
 
 %% Plotting
-% merge all time steps together
+% memPlus all time steps together
 % to do so we need to relabel the dimKeys
 % Z{i}({'x','y','theta'}) ensures that the dimKeys are in the expected order for relabeling
 i = 1;
 liftZ = copy(Z{i}({'x','y','theta'}),{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)});
 for i = 2:N
-    liftZ = merge(liftZ, copy(Z{i}({'x','y','theta'}),{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)}));
+    liftZ = memPlus(liftZ, copy(Z{i}({'x','y','theta'}),{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)}));
 end
 
 % imagine that new data is received that informs the y value at time step 3
 Z_newdata = memZono(zono(0.005,0.025),'z_pin');
 Z_newdata.dimKeys = 'y_3';
-liftZ_newdata = merge(liftZ,Z_newdata,'pin_merge');
+liftZ_newdata = memPlus(liftZ,Z_newdata,'pin_merge');
 
 for i = 1:N
     subplot(2+do_direct,1,1);
@@ -95,16 +95,16 @@ function [Z] = evolveUnicycleMemZono(sinZono,cosZono,v,U,Z0,N)
         % does X_{k+1}  = X_k
         %      Y_{k+1}  = Y_k
         %      TH_{k+1} = TH_K + U
-        Z{k} = combine(Z{k-1},UMZ);
+        Z{k} = memAnd(Z{k-1},UMZ);
     
         % does X_{k+1} = ... + v*cos(theta)
         % only use Z{k-1}({'theta'}) otherwise the x and y dims would get intersected
-        dX = v*merge(cosMZ,Z{k-1}({'theta'}),sprintf('cos_x_%i',k));
-        Z{k} = combine(Z{k}, dX({'x'})); % only add the x (the function value, not the theta input domain of cosine)
+        dX = v*memPlus(cosMZ,Z{k-1}({'theta'}),sprintf('cos_x_%i',k));
+        Z{k} = memAnd(Z{k}, dX({'x'})); % only add the x (the function value, not the theta input domain of cosine)
     
         % does Y_{k+1} = .. + v*sin(theta)
-        dY = v*merge(sinMZ,Z{k-1}({'theta'}),sprintf('sin_y_%i',k));
-        Z{k} = combine(Z{k}, dY({'y'}));
+        dY = v*memPlus(sinMZ,Z{k-1}({'theta'}),sprintf('sin_y_%i',k));
+        Z{k} = memAnd(Z{k}, dY({'y'}));
     end
 end
 

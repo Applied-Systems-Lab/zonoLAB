@@ -27,7 +27,7 @@ X_all = X_{1};
 % Terminal Set
 X_F = memZono(X_F,sprintf('x_%d',N));
 
-switch 'fullStack' %'withOverload' 'transform&merge' 'fullStack'
+switch 'fullStack' %'withOverload' 'transform&memPlus' 'fullStack'
     case 'withOverload'
         % Time-evolution
         for k = 1:N-1
@@ -44,12 +44,12 @@ switch 'fullStack' %'withOverload' 'transform&merge' 'fullStack'
             X_all = [
                 X_all; 
                 U_{k}; 
-                X_{k+1}]; %<---- vertcat() = merge() [really just cartprod()]
+                X_{k+1}]; %<---- vertcat() = memPlus() [really just cartprod()]
 
         end
-        X_inter = X_all.merge(X_F,'terminal_cons'); %<-- merge does the intersection
+        X_inter = X_all.memPlus(X_F,'terminal_cons'); %<-- memPlus does the intersection
 
-    case 'transform&merge'
+    case 'transform&memPlus'
         lbl_ = @(x,k) sprintf('%s_%d',x,k);
         % Time-evolution
         for k = 1:N-1
@@ -65,10 +65,10 @@ switch 'fullStack' %'withOverload' 'transform&merge' 'fullStack'
                 X_{k}.dimKeys,newDims); %<== transform has affine A x + B
             
             % Save Data
-            X_all = X_all.merge(U_{k});
-            X_all = X_all.merge(X_{k+1});
+            X_all = X_all.memPlus(U_{k});
+            X_all = X_all.memPlus(X_{k+1});
         end
-        X_inter = X_all.merge(X_F,'terminal_cons'); % <--- intersect common dimensions
+        X_inter = X_all.memPlus(X_F,'terminal_cons'); % <--- intersect common dimensions
 
     case 'fullStack'
         % Label Functions
@@ -79,7 +79,7 @@ switch 'fullStack' %'withOverload' 'transform&merge' 'fullStack'
         % Time-Evolution
         for k = 1:N-1
             % Current Input
-            X_all = X_all.merge(memZono(U_nom,uLabels(k)));
+            X_all = X_all.memPlus(memZono(U_nom,uLabels(k)));
 
             % subsref(), linMap(), plus()
             X_all = [X_all;
@@ -90,7 +90,7 @@ switch 'fullStack' %'withOverload' 'transform&merge' 'fullStack'
             % end
         end
 
-        X_inter = X_all.merge(X_F,'terminal_cons');
+        X_inter = X_all.memPlus(X_F,'terminal_cons');
 
         X_ = arrayfun(@(k) X_all(xLabels(k)),1:N,UniformOutput=false);
         U_ = arrayfun(@(k) X_all(uLabels(k)),1:N-1,UniformOutput=false);

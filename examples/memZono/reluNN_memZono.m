@@ -54,7 +54,7 @@ for i = 1:(length(bs)-1)
     for j = 1:n2
         relu_ij = memZono(relu,sprintf('phi_L%d_u%d_',i,j));
         relu_ij.dimKeys = {sprintf('v_L%d_u%d_',i,j),sprintf('x_L%d_u%d_',i,j)};
-        layer = layer.merge(relu_ij); % no new constraints will be added, so not providing labels
+        layer = layer.memPlus(relu_ij); % no new constraints will be added, so not providing labels
     end
 
     vs = layer.keysStartsWith('v').dimKeys; % inputs to a ReLU layer
@@ -62,8 +62,8 @@ for i = 1:(length(bs)-1)
 
     prev_layer = NN(prev_xs);  % select the output of the previous layer
     prev_layer = prev_layer.transform(bs{i},Ws{i},prev_xs,vs); % map it through the weights and bias
-    layer = layer.merge(prev_layer,sprintf('merge_L%i',i)); % merge to force transformed previous layer to be equal to input to current layer
-    NN = NN.merge(layer); % merge with the previous parts of NN (no new constraints will be added, so not providing labels)
+    layer = layer.memPlus(prev_layer,sprintf('merge_L%i',i)); % memPlus to force transformed previous layer to be equal to input to current layer
+    NN = NN.memPlus(layer); % memPlus with the previous parts of NN (no new constraints will be added, so not providing labels)
    
     prev_xs = xs;
 end
@@ -72,7 +72,7 @@ end
 ys = memZono.genKeys('y',1:length(bs{end}));
 prev_layer = NN(xs);
 prev_layer = prev_layer.transform(bs{end},Ws{end},xs,ys);
-NN = NN.merge(prev_layer); % no new constraints will be added, so not providing labels
+NN = NN.memPlus(prev_layer); % no new constraints will be added, so not providing labels
 
 NN = NN([x0s,ys]); % input-output map
 Y = NN(ys);  % output

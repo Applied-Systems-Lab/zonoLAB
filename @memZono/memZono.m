@@ -272,7 +272,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function out = get.dimKeys(obj); out = obj.keys_.dims; end
         function out = get.factorKeys(obj); out = obj.keys_.factors; end
         function out = get.conKeys(obj); out = obj.keys_.cons; end
-
+            
         % Key Setter Functions
         function obj = set.keys(obj,in) %<-- add better checks?
             if isstruct(in)
@@ -299,7 +299,24 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             catch; error('con key set issue');
             end
         end
+    end
 
+    %% Generate Keys
+    methods (Static)
+        function [out] = genKeys(prefix,nums)
+            labeler = @(prefix,num)sprintf('%s_%i',prefix,num);
+            out = arrayfun(@(num){labeler(prefix,num)},nums);
+            % if ~iscell(prefix)
+            %     out = arrayfun(@(num){labeler(prefix,num)},nums);
+            % else
+            %     out = {};
+            %     for i = 1:numel(prefix)
+            %         out = [out, arrayfun(@(num){labeler(prefix{i},num)},nums)];
+            %     end
+            % end
+        end
+    end
+    methods
         % Create keys from a patern
         function keys_ = keysStartsWith(obj,pattern)
             for field = string({'dims','factors','cons'})
@@ -360,8 +377,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             % out = obj;
         end
     end
-
-    %% Keys Stuff
+    %% Internal Keys Operations
     methods (Static)
         function out = keysCheck(in,n)
             % keysCheck(in,n) - checks to ensure the keys(in) is structured
@@ -407,7 +423,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 idxk2(k) = find(strcmp(in2,k2{k}));
             end
 
-
             % Find indices of shared keys
             if isempty(ks)
                 idxks1 = []; idxks2 = [];
@@ -420,28 +435,14 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 end
             end
         end
-
-        function [out] = genKeys(prefix,nums)
-            labeler = @(prefix,num)sprintf('%s_%i',prefix,num);
-            out = arrayfun(@(num){labeler(prefix,num)},nums);
-            % if ~iscell(prefix)
-            %     out = arrayfun(@(num){labeler(prefix,num)},nums);
-            % else
-            %     out = {};
-            %     for i = 1:numel(prefix)
-            %         out = [out, arrayfun(@(num){labeler(prefix{i},num)},nums)];
-            %     end
-            % end
-        end
-
     end
 
     %% General Methods
     methods
         %% Set Operations
         obj = transform(obj1,obj2,M,inDims,outDims); % Affine Mapping w/ dims
-        obj = merge(obj1,obj2,sharedDimLabels); % Intersection
-        obj = combine(obj1,obj2); % Minkowski Sum
+        obj = memPlus(obj1,obj2,sharedDimLabels); % Intersection
+        obj = memAnd(obj1,obj2); % Minkowski Sum
         obj = cartProd(obj1,obj2,dims1,dims2,options); % cartisian product
 
         % Additional Methods
@@ -464,7 +465,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             out = obj.projection(inDims);
             out.dimKeys = outDims;
         end
-        
     end
     methods
         %% Indexing
@@ -484,7 +484,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             keys_out = obj.keys_; keys_out.dims = dims;
             out = memZono(obj.G_(idx,:),obj.c_(idx,:),obj.A_,obj.b_,obj.vset_,keys_out);
         end
-
     end
 
     %% direct overide/expansion of abstractZono methods to dimAware versions
@@ -493,17 +492,19 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         plot(obj,varargin);
 
         % dimAwareFun
-        varargout = dimAwareFun(obj,fun,dimIn,dimOut,lbl,options);
+        varargout = dimAwareFun(fun,obj,dimIn,dimOut,lbl,options);
 
         % boundingBox
-        
+        function out = boundingBox(in); out = dimAwareFun(@boundingBox,in); end
+        % convexHull
+        function out = convexHull(in1,in2); out = dimAwareFun(@convexHull,in1,in2); end
 
     end
 
     %% Overloading ----------------------------
     methods
         function out = plus(in1,in2)
-            out = in1.combine(in2);
+            out = in1.memAnd(in2);
         end
         function out = mtimes(in1,in2)
             if isa(in2,'memZono')
@@ -513,7 +514,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
         function out = and(obj1,obj2)
-            out = merge(obj1,obj2,'_and');
+            out = memPlus(obj1,obj2,'_and');
         end
         function obj = or(obj1,obj2)
             error('Union not yet implimented')
@@ -549,7 +550,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function obj = all(varargin)
             obj = varargin{1};
             for i = 2:nargin %<========= not efficient
-                obj = merge(obj,varargin{2},sprintf('_all_%d',i));
+                obj = memPlus(obj,varargin{2},sprintf('_all_%d',i));
             end
         end
         % any (extended or)

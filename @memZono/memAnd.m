@@ -2,7 +2,7 @@
 %   Method:
 %       A dimension-aware and memory-preserving minkowski sum of memZono objects
 %   Syntax:
-%       [Z] = combine(X,Y)
+%       [Z] = memAnd(X,Y)
 %   Inputs:
 %       X - memZono in R^n
 %       Y - memZono in R^m
@@ -14,7 +14,7 @@
 %       all other dimensions are kept. 
 %       Factors are aligned to preserve memory.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-function obj = combine(obj1,obj2)
+function obj = memAnd(obj1,obj2)
 
     %% Keys
     % shared factors
