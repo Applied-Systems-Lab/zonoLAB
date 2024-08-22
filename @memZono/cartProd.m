@@ -16,7 +16,7 @@ function obj = cartProd(obj1,obj2,dims1,dims2,options)
             if ~isempty(ks)%intersect(dims1,dims2))
                 error('standard cartProd only works if no dims are in common')
             end
-            obj = memPlus(obj1,obj2);
+            obj = memorySum(obj1,obj2);
         case 'rename'
             if ~isempty(ks)
                 Z1 = obj1.projection(k1); 
@@ -24,12 +24,12 @@ function obj = cartProd(obj1,obj2,dims1,dims2,options)
                 Z1s = obj1.projection(ks).relabel(options.s1,'dims');
                 Z2s = obj2.projection(ks).relabel(options.s2,'dims');
                 % perform cartProd()
-                obj = memPlus(Z1s,Z2s);
-                if Z1.n>0; obj.memPlus(Z1); end
-                if Z2.n>0; obj.memPlus(Z2); end
+                obj = memorySum(Z1s,Z2s);
+                if Z1.n>0; obj.memorySum(Z1); end
+                if Z2.n>0; obj.memorySum(Z2); end
             else
-                obj = memPlus(Z1,Z2);
+                obj = memorySum(Z1,Z2);
             end
     end
-    warning('cartProd not implimented directly (uses memPlus w/ a check)... should reimpliment as vertcat and then overload cartProd() as vertcat');
+    warning('cartProd not implimented directly (uses memorySum w/ a check)... should reimpliment as vertcat and then overload cartProd() as vertcat');
 end

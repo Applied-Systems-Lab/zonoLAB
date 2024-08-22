@@ -2,7 +2,7 @@
 %   Method:
 %       A dimension-aware and memory-enabled intersection of memZono objects
 %   Syntax:
-%       [Z] = memPlus(X,Y,sharedDimLabels)
+%       [Z] = memorySum(X,Y,sharedDimLabels)
 %   Inputs:
 %       X               - memZono in R^n
 %       Y               - memZono in R^m
@@ -19,7 +19,7 @@
 %       provided and labeled acording to sharedDimLabels.
 %       Factors are aligned to preserve memory.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-function obj = memPlus(obj1,obj2,sharedDimLabels)
+function obj = memorySum(obj1,obj2,sharedDimLabels)
     arguments
         obj1
         obj2

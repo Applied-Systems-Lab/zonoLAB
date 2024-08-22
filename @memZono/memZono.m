@@ -441,8 +441,8 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
     methods
         %% Set Operations
         obj = transform(obj1,obj2,M,inDims,outDims); % Affine Mapping w/ dims
-        obj = memPlus(obj1,obj2,sharedDimLabels); % Intersection
-        obj = memAnd(obj1,obj2); % Minkowski Sum
+        obj = memorySum(obj1,obj2,sharedDimLabels); % Intersection
+        obj = memoryIntersection(obj1,obj2); % Minkowski Sum
         obj = cartProd(obj1,obj2,dims1,dims2,options); % cartisian product
 
         % Additional Methods
@@ -504,7 +504,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
     %% Overloading ----------------------------
     methods
         function out = plus(in1,in2)
-            out = in1.memAnd(in2);
+            out = in1.memoryIntersection(in2);
         end
         function out = mtimes(in1,in2)
             if isa(in2,'memZono')
@@ -514,7 +514,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
         function out = and(obj1,obj2)
-            out = memPlus(obj1,obj2,'_and');
+            out = memorySum(obj1,obj2,'_and');
         end
         function obj = or(obj1,obj2)
             error('Union not yet implimented')
@@ -550,7 +550,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function obj = all(varargin)
             obj = varargin{1};
             for i = 2:nargin %<========= not efficient
-                obj = memPlus(obj,varargin{2},sprintf('_all_%d',i));
+                obj = memorySum(obj,varargin{2},sprintf('_all_%d',i));
             end
         end
         % any (extended or)
