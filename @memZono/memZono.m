@@ -443,7 +443,8 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         obj = transform(obj1,obj2,M,inDims,outDims); % Affine Mapping w/ dims
         obj = memorySum(obj1,obj2,sharedDimLabels); % Intersection
         obj = memoryIntersection(obj1,obj2); % Minkowski Sum
-        obj = cartProd(obj1,obj2,dims1,dims2,options); % cartisian product
+        [obj,keysStruct] = memoryCartProd(obj1,obj2); % cartisian product
+        obj = cartProd(obj1,obj2,dims1,dims2,options); % external cartisian product
 
         % Additional Methods
         function out = linMap(in,M,inDims,outDims)
