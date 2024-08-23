@@ -124,7 +124,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
     end
     methods (Static)
-        % Costruction based on name of base objects
+        % Construction based on name of base objects
         function obj = varNameConstructor(varargin)
             for i = 1:nargin
                 varName = inputname(i);
@@ -143,18 +143,12 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             if isempty(obj.G_); obj.G_ = zeros(obj.n,0); end
             out = obj.G_; 
         end
-        % function out = get.c_(obj); out = obj.c_; end
+        function out = get.c_(obj); out = obj.c_; end
         function out = get.A_(obj)
             if isempty(obj.A_); obj.A_ = zeros(0,obj.nG); end
             out = obj.A_; 
         end
-        % function out = get.b_(obj); out = obj.b_; end
-
-        % % Set Matrices
-        % function obj = set.G_(obj,in); obj.G_ = in; end
-        % function obj = set.c_(obj,in); obj.c_ = in; end
-        % function obj = set.A_(obj,in); obj.A_ = in; end
-        % function obj = set.b_(obj,in); obj.b_ = in; end
+        function out = get.b_(obj); out = obj.b_; end
 
         % hybZono Matrices
         function out = get.Gc_(obj); out = obj.G_(:,obj.vset_); end
@@ -199,7 +193,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 out = false;
             end
         end
-
         function out = get.baseClass(obj)
             if all(obj.vset_)
                 if isempty(obj.A_)
@@ -225,9 +218,16 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                         obj.Ac_,obj.Ab_,obj.b_);
             end
         end
-
+        % Output Specific Dimensions
         function out = Z(obj,dims)
             out = projection(obj,dims).Z_;
+        end
+
+        % Output specific properties
+        function varargout = varOut(obj,varargin)
+            for i = 1:numel(varargin)
+                varargout{i} = obj.(varargin{i});
+            end
         end
 
         % Setter function for underlying zonotope data
@@ -306,14 +306,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function [out] = genKeys(prefix,nums)
             labeler = @(prefix,num)sprintf('%s_%i',prefix,num);
             out = arrayfun(@(num){labeler(prefix,num)},nums);
-            % if ~iscell(prefix)
-            %     out = arrayfun(@(num){labeler(prefix,num)},nums);
-            % else
-            %     out = {};
-            %     for i = 1:numel(prefix)
-            %         out = [out, arrayfun(@(num){labeler(prefix{i},num)},nums)];
-            %     end
-            % end
         end
     end
     methods
@@ -327,54 +319,30 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                     end
                 end
             end
-            % out.dims = {};
-            % for i=1:length(obj.dimKeys)
-            %     if startsWith(obj.dimKeys{i},pattern)
-            %         out.dims = [out.dims,obj.dimKeys{i}];
-            %     end
-            % end
-            % out.factors = {};
-            % for i=1:length(obj.factorKeys)
-            %     if startsWith(obj.factorKeys{i},pattern)
-            %         out.factors = [out.factors,obj.factorKeys{i}];
-            %     end
-            % end
-            % out.cons = {};
-            % for i=1:length(obj.conKeys)
-            %     if startsWith(obj.conKeys{i},pattern)
-            %         out.cons = [out.cons,obj.conKeys{i}];
-            %     end
-            % end
         end
 
-        % Relabel all keys by adding a suffix
-        function out = relabel(obj,s,fields)
-            arguments
-                obj
-                s
-                fields = {'dims','factors','cons'}
-            end
-            keys_ = obj.keys_;
-            for field = string(fields)
-                for i = 1:numel(obj.keys_.(field))
-                    keys_.(field){i} = append(obj.keys_.(field){i},s);
-                end
-            end
-            out = memZono(obj,keys_);
-            % obj.dimKeys = memZono.genKeys(obj.dimKeys,s);
-            % out = obj;
-            % for i = 1: length(obj.dimKeys)
-            %     obj.dimKeys{i} = append(obj.dimKeys{i}, s);
-            % end
-            % obj.factorKeys = memZono.genKeys(obj.factorKeys,s);
-            % for i = 1: length(obj.factorKeys)
-            %     obj.factorKeys{i} = append(obj.factorKeys{i}, s);
-            % end
-            % obj.conKeys = memZono.genKeys(obj.factorKeys,s);
-            % for i = 1: length(obj.conKeys)
-            %     obj.conKeys{i} = append(obj.conKeys{i}, s);
-            % end
-            % out = obj;
+        % % Relabel all keys by adding a suffix
+        % function out = relabel(obj,s,fields)
+        %     arguments
+        %         obj
+        %         s
+        %         fields = {'dims','factors','cons'}
+        %     end
+        %     keys_ = obj.keys_;
+        %     for field = string(fields)
+        %         for i = 1:numel(obj.keys_.(field))
+        %             keys_.(field){i} = append(obj.keys_.(field){i},s);
+        %         end
+        %     end
+        %     out = memZono(obj,keys_);
+        % end
+        
+        % Relabel Dims
+        function out = relabelDims(obj,inDims,outDims)
+            if ~iscell(inDims); inDims = obj.keysStartsWith(inDims).dimKeys; end
+            if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:numel(outDims)); end
+            out = obj.projection(inDims);
+            out.dimKeys = outDims;
         end
     end
     %% Internal Keys Operations
@@ -416,12 +384,8 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             % Find Indices of individual keys
             idxk1 = zeros(1,length(k1));
             idxk2 = zeros(1,length(k2));
-            for k = 1:length(k1)
-                idxk1(k) = find(strcmp(in1,k1{k}));
-            end
-            for k = 1:length(k2)
-                idxk2(k) = find(strcmp(in2,k2{k}));
-            end
+            for k = 1:length(k1), idxk1(k) = find(strcmp(in1,k1{k})); end
+            for k = 1:length(k2), idxk2(k) = find(strcmp(in2,k2{k})); end
 
             % Find indices of shared keys
             if isempty(ks)
@@ -435,14 +399,27 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 end
             end
         end
+
+        function [lbl,idx] = getKeysIndices(obj1,obj2)
+            %% Keys
+            % shared dims
+            [lbl.d1,lbl.ds,lbl.d2] = memZono.getUniqueKeys(obj1.dimKeys,obj2.dimKeys);
+            [idx.d1,idx.ds1,idx.ds2,idx.d2] = memZono.getKeyIndices(obj1.dimKeys,obj2.dimKeys);
+            % shared factors
+            [lbl.k1,lbl.ks,lbl.k2] = memZono.getUniqueKeys(obj1.factorKeys,obj2.factorKeys);
+            [idx.k1,idx.ks1,idx.ks2,idx.k2] = memZono.getKeyIndices(obj1.factorKeys,obj2.factorKeys);
+            % shared cons
+            [lbl.c1,lbl.cs,lbl.c2] = memZono.getUniqueKeys(obj1.conKeys,obj2.conKeys);
+            [idx.c1,idx.cs1,idx.cs2,idx.c2] = memZono.getKeyIndices(obj1.conKeys,obj2.conKeys);
+        end
     end
 
     %% General Methods
     methods
         %% Set Operations
         obj = transform(obj1,obj2,M,inDims,outDims); % Affine Mapping w/ dims
-        obj = memorySum(obj1,obj2,sharedDimLabels); % Intersection
-        obj = memoryIntersection(obj1,obj2); % Minkowski Sum
+        obj = memoryIntersection(obj1,obj2,sharedDimLabels); % Intersection
+        obj = memorySum(obj1,obj2); % Minkowski Sum
         [obj,keysStruct] = memoryCartProd(obj1,obj2); % cartisian product
         obj = cartProd(obj1,obj2,dims1,dims2,options); % external cartisian product
 
@@ -459,13 +436,13 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             out = in.transform([],M,inDims,outDims,retainExtraDims=false);%.projection(outDims);
         end
 
-        % Copy constructor (allows relabeling dimension)
-        function out = copy(obj,inDims,outDims)
-            if ~iscell(inDims); inDims = obj.keysStartsWith(inDims).dimKeys; end
-            if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:numel(outDims)); end
-            out = obj.projection(inDims);
-            out.dimKeys = outDims;
-        end
+        % % Copy constructor (allows relabeling dimension)
+        % function out = copy(obj,inDims,outDims)
+        %     if ~iscell(inDims); inDims = obj.keysStartsWith(inDims).dimKeys; end
+        %     if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:numel(outDims)); end
+        %     out = obj.projection(inDims);
+        %     out.dimKeys = outDims;
+        % end
     end
     methods
         %% Indexing
@@ -475,10 +452,8 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         % Projection is defined for internal use - subsref (indexing) is simpilar syntax
         function out = projection(obj,dims)
             if ~iscell(dims) % if not already in cell form
-                if strcmp(dims,':')
-                    dims = obj.dimKeys;
-                else
-                    dims = obj.keysStartsWith(dims).dims;
+                if strcmp(dims,':'), dims = obj.dimKeys;
+                else, dims = obj.keysStartsWith(dims).dims;
                 end
             end
             [~,idx] = ismember(dims,obj.dimKeys);
@@ -505,17 +480,15 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
     %% Overloading ----------------------------
     methods
         function out = plus(in1,in2)
-            out = in1.memoryIntersection(in2);
+            out = in1.memorySum(in2);
         end
         function out = mtimes(in1,in2)
-            if isa(in2,'memZono')
-                out = in2.transform([],in1); %<== flip the syntax order
-            else
-                error('mtimes only overloaded for one direction')
+            if isa(in2,'memZono'), out = in2.transform([],in1); %<== flip the syntax order
+            else, error('mtimes only overloaded for one direction');
             end
         end
         function out = and(obj1,obj2)
-            out = memorySum(obj1,obj2,'_and');
+            out = memoryIntersection(obj1,obj2,'_and');
         end
         function obj = or(obj1,obj2)
             error('Union not yet implimented')
@@ -532,13 +505,12 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
         % horzcat not yet decided (union? sum?)
         function obj = horzcat(varargin)
-            if nargin == 1
-                obj = varargin{1};
-            else
-                error('horzcat not defined');
+            if nargin == 1, obj = varargin{1};
+            else, error('horzcat not defined');
             end
         end
     end
+
     methods (Static)
         % sum (extended plus)
         function obj = sum(varargin)
@@ -551,13 +523,13 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function obj = all(varargin)
             obj = varargin{1};
             for i = 2:nargin %<========= not efficient
-                obj = memorySum(obj,varargin{2},sprintf('_all_%d',i));
+                obj = memoryIntersection(obj,varargin{2},sprintf('_all_%d',i));
             end
         end
-        % any (extended or)
+        % any (extended or) ... NOT IMPLIMENTED
         function obj = any(varargin)
             obj = varargin{1};
-            for i = 2:nargin %<========= not efficient
+            for i = 2:nargin
                 obj = or(obj,varargin{2});
             end
         end
@@ -587,33 +559,22 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         %% Hybzono versions as tables
         function out = get.Gc(obj)
             out = obj.G(:,obj.keys.factors(obj.vset_));
-            % out = array2table(obj.Gc_, RowNames=obj.dimKeys, VariableNames=obj.factorKeys(obj.vset_)); 
         end
         function out = get.Gb(obj)
-            if obj.nGb > 0
-                out = obj.G(:,obj.keys.factors(~obj.vset_));
-            else
-                out = [];
-            end                
-            % if ~all(obj.vset_); out = []; return; end
-            % out = array2table(obj.Gb_, RowNames=obj.dimKeys, VariableNames=obj.factorKeys(~obj.vset_)); 
+            if obj.nGb > 0, out = obj.G(:,obj.keys.factors(~obj.vset_));
+            else, out = [];
+            end
         end
         function out = get.Ac(obj)
-            if obj.nC > 0
-                out =  obj.A(:,obj.keys.factors(obj.vset_));
-            else
-                out = [];
+            if obj.nC > 0, out =  obj.A(:,obj.keys.factors(obj.vset_));
+            else, out = [];
             end
-            % out = array2table(obj.Ac_,RowNames=obj.conKeys,VariableNames=obj.factorKeys(obj.vset_)); 
         end
         function out = get.Ab(obj) 
             if obj.nGb > 0 && obj.nC > 0
                 out = obj.A(:,obj.keys.factors(~obj.vset_));
-            else
-                out = [];
+            else, out = [];
             end
-            % if ~all(obj.vset_); out = []; return; end
-            % out = array2table(obj.Ab_,RowNames=obj.conKeys,VariableNames=obj.factorKeys(~obj.vset_)); 
         end
     end
 

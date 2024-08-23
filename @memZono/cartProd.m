@@ -13,8 +13,8 @@ function obj = cartProd(obj1,obj2,dims1,dims2,options)
     [k1,ks,k2] = memZono.getUniqueKeys(dims1,dims2);
     switch options.sharedMethod
         case 'reject'
-            if ~isempty(ks)%intersect(dims1,dims2))
-                error('standard cartProd only works if no dims are in common')
+            if ~isempty(ks)
+                error('standard cartProd only works if no dims are in common');
             end
             obj = memoryCartProd(obj1,obj2);
         case 'rename'

@@ -1,20 +1,12 @@
 % Returns 
-function [obj,keysStruct] = memoryCartProd(obj1,obj2)
+function obj = memoryCartProd(obj1,obj2)
     arguments
         obj1 memZono
         obj2 memZono
     end
 
-    %% Keys
-    % shared dims
-    [lbl.d1,lbl.ds,lbl.d2] = memZono.getUniqueKeys(obj1.dimKeys,obj2.dimKeys);
-    [idx.d1,idx.ds1,idx.ds2,idx.d2] = memZono.getKeyIndices(obj1.dimKeys,obj2.dimKeys);
-    % shared factors
-    [lbl.k1,lbl.ks,lbl.k2] = memZono.getUniqueKeys(obj1.factorKeys,obj2.factorKeys);
-    [idx.k1,idx.ks1,idx.ks2,idx.k2] = memZono.getKeyIndices(obj1.factorKeys,obj2.factorKeys);
-    % shared cons
-    [lbl.c1,lbl.cs,lbl.c2] = memZono.getUniqueKeys(obj1.conKeys,obj2.conKeys);
-    [idx.c1,idx.cs1,idx.cs2,idx.c2] = memZono.getKeyIndices(obj1.conKeys,obj2.conKeys);
+    % Grab Key Indices
+    [lbl,idx] = memZono.getKeysIndices(obj1,obj2);
 
     %% Factor-based Memory Cartisian Product
     G_ = [
@@ -48,9 +40,7 @@ function [obj,keysStruct] = memoryCartProd(obj1,obj2)
     %% Define memZono
     obj = memZono(G_,c_,A_,b_,vset_,keys_);
 
-    %% out struct    
-    keysStruct.lbl = lbl;
-    keysStruct.idx = idx;
+    
     % keysStruct.lbl = cell2struct(...
     %     {lbl.d1,lbl.ds,lbl.d2,...
     %      lbl.k1,lbl.ks,lbl.k2,...

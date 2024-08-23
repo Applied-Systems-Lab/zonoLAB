@@ -27,7 +27,7 @@ X_all = X_{1};
 % Terminal Set
 X_F = memZono(X_F,sprintf('x_%d',N));
 
-switch 'fullStack' %'withOverload' 'transform&memorySum' 'fullStack'
+switch 'fullStack' %'withOverload' 'transform&memoryIntersection' 'fullStack'
     case 'withOverload'
         % Time-evolution
         for k = 1:N-1
@@ -44,12 +44,12 @@ switch 'fullStack' %'withOverload' 'transform&memorySum' 'fullStack'
             X_all = [
                 X_all; 
                 U_{k}; 
-                X_{k+1}]; %<---- vertcat() = memorySum() [really just cartprod()]
+                X_{k+1}]; %<---- vertcat() = memoryIntersection() [really just cartprod()]
 
         end
-        X_inter = X_all.memorySum(X_F,'terminal_cons'); %<-- memorySum does the intersection
+        X_inter = X_all.memoryIntersection(X_F,'terminal_cons'); %<-- memoryIntersection does the intersection
 
-    case 'transform&memorySum'
+    case 'transform&memoryIntersection'
         lbl_ = @(x,k) sprintf('%s_%d',x,k);
         % Time-evolution
         for k = 1:N-1
@@ -65,10 +65,10 @@ switch 'fullStack' %'withOverload' 'transform&memorySum' 'fullStack'
                 X_{k}.dimKeys,newDims); %<== transform has affine A x + B
             
             % Save Data
-            X_all = X_all.memorySum(U_{k});
-            X_all = X_all.memorySum(X_{k+1});
+            X_all = X_all.memoryIntersection(U_{k});
+            X_all = X_all.memoryIntersection(X_{k+1});
         end
-        X_inter = X_all.memorySum(X_F,'terminal_cons'); % <--- intersect common dimensions
+        X_inter = X_all.memoryIntersection(X_F,'terminal_cons'); % <--- intersect common dimensions
 
     case 'fullStack'
         % Label Functions
@@ -79,7 +79,7 @@ switch 'fullStack' %'withOverload' 'transform&memorySum' 'fullStack'
         % Time-Evolution
         for k = 1:N-1
             % Current Input
-            X_all = X_all.memorySum(memZono(U_nom,uLabels(k)));
+            X_all = X_all.memoryIntersection(memZono(U_nom,uLabels(k)));
 
             % subsref(), linMap(), plus()
             X_all = [X_all;
@@ -90,7 +90,7 @@ switch 'fullStack' %'withOverload' 'transform&memorySum' 'fullStack'
             % end
         end
 
-        X_inter = X_all.memorySum(X_F,'terminal_cons');
+        X_inter = X_all.memoryIntersection(X_F,'terminal_cons');
 
         X_ = arrayfun(@(k) X_all(xLabels(k)),1:N,UniformOutput=false);
         U_ = arrayfun(@(k) X_all(uLabels(k)),1:N-1,UniformOutput=false);
