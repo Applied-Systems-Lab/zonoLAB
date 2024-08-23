@@ -35,9 +35,9 @@ Z = evolveUnicycleMemZono(sinZono,cosZono,v,U,Z0,N);
 % to do so we need to relabel the dimKeys
 % Z{i}({'x','y','theta'}) ensures that the dimKeys are in the expected order for relabeling
 i = 1;
-liftZ = copy(Z{i}({'x','y','theta'}),{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)});
+liftZ = relabelDims(Z{i},{'x','y','theta'},{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)});
 for i = 2:N
-    liftZ = memoryIntersection(liftZ, copy(Z{i}({'x','y','theta'}),{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)}));
+    liftZ = memoryIntersection(liftZ, relabelDims(Z{i},{'x','y','theta'},{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)}));
 end
 
 % imagine that new data is received that informs the y value at time step 3
@@ -47,11 +47,11 @@ liftZ_newdata = memoryIntersection(liftZ,Z_newdata,'pin_merge');
 
 for i = 1:N
     subplot(2+do_direct,1,1);
-    plot(Z{i},{'x','y'},'b',0.2)
+    plot(Z{i}({'x','y'}),'b',0.2)
     title('Memory Approach')
     subplot(2+do_direct,1,2);
-    plot(Z{i},{'x','y'},'k',0.05)
-    plot(liftZ_newdata,{sprintf('x_%i',i),sprintf('y_%i',i)},'r',0.2)
+    plot(Z{i}({'x','y'}),'k',0.05)
+    plot(liftZ_newdata({sprintf('x_%i',i),sprintf('y_%i',i)}),'r',0.2)
     title('Memory with new data at k=3')
     if do_direct
         subplot(3,1,3);

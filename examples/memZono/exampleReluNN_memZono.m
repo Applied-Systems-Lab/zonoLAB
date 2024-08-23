@@ -3,7 +3,7 @@
 %   Exactly representing a neural network composed entirely of ReLU 
 %   activation functions as a hybrid zonotope.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-
+clear; close all;
 % Parameters
 % Load parameters from mat file
 % This neural network approximates the function f = cos(X1)+sin(X2) over the domain [-5,5]x[-5,5]
@@ -52,8 +52,13 @@ X = hybZono(Gx, [], cx, [], [], []);
 % Construct the output zonotope Z and the lifted input-output mapping XZ
 fprintf('Zonotope model: ')
 tic
-[NN,Y] = reluNN_memZono(X,Ws,bs,a);
+[NN,Y,NN_Z] = reluNN_memZono(X,Ws,bs,a);
 toc
+
+% Z = NN_Z;
+% X = Z('x'); Y = Z('y');
+% close all
+% return
 
 % Plot Hybrid Zonotope
 subplot(1,4,4)

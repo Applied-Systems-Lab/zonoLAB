@@ -3,8 +3,8 @@
 %   base class with a specification of specific dimensions
 function plot(obj,varargin)
 
+    if obj.n <= 0; error('Need dimensions to plot'); end
     if obj.n > 3; error('Too many dimensions to plot'); end
-
 
     % Call plot command.
     Z_ = obj.Z_;
@@ -13,7 +13,7 @@ function plot(obj,varargin)
     % Label Axis with dims
     xlabel(obj.dimKeys{1});
     ylabel(obj.dimKeys{2});
-    if obj.n == 3; zlabel(obje.dimKeys{3}); end
+    if obj.n == 3; zlabel(obj.dimKeys{3}); end
 
 end
 

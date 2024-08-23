@@ -21,10 +21,11 @@
 function varargout = reluNN_memZono(X,Ws,bs,a)
 
 nOutputs = nargout;
-if (nOutputs == 1) || (nOutputs >= 3) 
-    error('Should either have 1 or 2 outputs (just NN or NN and Y).')
-end
+% if (nOutputs == 1) || (nOutputs > 3) 
+%     error('Should either have 1 or 2 outputs (just NN or NN and Y).')
+% end
 varargout = cell(1,nOutputs);
+% error isn't really needed...
 
 if nargin < 4
     a = 1000;
@@ -54,16 +55,16 @@ for i = 1:(length(bs)-1)
     for j = 1:n2
         relu_ij = memZono(relu,sprintf('phi_L%d_u%d_',i,j));
         relu_ij.dimKeys = {sprintf('v_L%d_u%d_',i,j),sprintf('x_L%d_u%d_',i,j)};
-        layer = layer.memorySum(relu_ij); % no new constraints will be added, so not providing labels
+        layer = layer.memoryIntersection(relu_ij); % no new constraints will be added, so not providing labels
     end
 
-    vs = layer.keysStartsWith('v').dimKeys; % inputs to a ReLU layer
-    xs = layer.keysStartsWith('x').dimKeys; % outputs of a ReLU layer
+    vs = layer.keysStartsWith('v').dims; % inputs to a ReLU layer
+    xs = layer.keysStartsWith('x').dims; % outputs of a ReLU layer
 
     prev_layer = NN(prev_xs);  % select the output of the previous layer
     prev_layer = prev_layer.transform(bs{i},Ws{i},prev_xs,vs); % map it through the weights and bias
-    layer = layer.memorySum(prev_layer,sprintf('merge_L%i',i)); % memorySum to force transformed previous layer to be equal to input to current layer
-    NN = NN.memorySum(layer); % memorySum with the previous parts of NN (no new constraints will be added, so not providing labels)
+    layer = layer.memoryIntersection(prev_layer,sprintf('merge_L%i',i)); % memoryIntersection to force transformed previous layer to be equal to input to current layer
+    NN = NN.memoryIntersection(layer); % memoryIntersection with the previous parts of NN (no new constraints will be added, so not providing labels)
    
     prev_xs = xs;
 end
@@ -72,17 +73,16 @@ end
 ys = memZono.genKeys('y',1:length(bs{end}));
 prev_layer = NN(xs);
 prev_layer = prev_layer.transform(bs{end},Ws{end},xs,ys);
-NN = NN.memorySum(prev_layer); % no new constraints will be added, so not providing labels
+NN = NN.memoryIntersection(prev_layer); % no new constraints will be added, so not providing labels
 
 NN = NN([x0s,ys]); % input-output map
 Y = NN(ys);  % output
 
-NN = NN.Z;
-Y = Y.Z;
+% NN = NN.Z;
+% Y = Y.Z;
 
-varargout{1} = NN;
-if nOutputs == 2
-    varargout{2} = Y;
-end 
+varargout{1} = NN.Z_;
+varargout{2} = Y.Z_;
+varargout{3} = NN;
 
 end

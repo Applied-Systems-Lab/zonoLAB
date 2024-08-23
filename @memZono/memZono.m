@@ -229,6 +229,11 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 varargout{i} = obj.(varargin{i});
             end
         end
+        % output all data
+        function varargout = exportAllData(obj)
+            fields = {'G_','c_','A_','b_','vset_','keys_'};
+            for i = 1:numel(fields); varargout{i} = obj.(fields{i}); end
+        end
 
         % Setter function for underlying zonotope data
         function obj = set.Z_(obj,in)
@@ -420,7 +425,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         obj = transform(obj1,obj2,M,inDims,outDims); % Affine Mapping w/ dims
         obj = memoryIntersection(obj1,obj2,sharedDimLabels); % Intersection
         obj = memorySum(obj1,obj2); % Minkowski Sum
-        [obj,keysStruct] = memoryCartProd(obj1,obj2); % cartisian product
+        obj = memoryCartProd(obj1,obj2); % cartisian product
         obj = cartProd(obj1,obj2,dims1,dims2,options); % external cartisian product
 
         % Additional Methods
@@ -434,6 +439,14 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 else;  outDims = memZono.genKeys(outDims,1:size(M,1)); end
             end
             out = in.transform([],M,inDims,outDims,retainExtraDims=false);%.projection(outDims);
+        end
+
+        function out = map(in1,in2,inDims,outDims)
+            memZonoBools = [isa(in1,'memZono'),isa(in2,'memZono')];
+            if all(memZonoBools)
+                error('Map currently not yet implimented for functional mapping');
+            end
+            out = linMap(in1,in2,inDims,outDims);
         end
 
         % % Copy constructor (allows relabeling dimension)

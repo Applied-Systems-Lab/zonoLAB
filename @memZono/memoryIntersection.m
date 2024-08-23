@@ -27,10 +27,9 @@ function obj = memoryIntersection(obj1,obj2,sharedDimLabels)
     end
 
     %% Memory CartProd
-    [Z,keysStruct] = memoryCartProd(obj1,obj2);
-    [G_,c_,A_,b_,vset_,keys_] = deal(Z.G_,Z.c_,Z.A_,Z.b_,Z.vset_,Z.keys_);
-    lbl = keysStruct.lbl;
-    idx = keysStruct.idx;
+    Z = memoryCartProd(obj1,obj2);
+    [G_,c_,A_,b_,vset_,keys_] = Z.exportAllData;
+    [lbl,idx] = memZono.getKeysIndices(obj1,obj2);
     
     %% Shared Dimensions
     if ~isempty(lbl.ds)
