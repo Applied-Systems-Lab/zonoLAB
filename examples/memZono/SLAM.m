@@ -56,9 +56,9 @@ for k = 1:T     % loop over every time step
 
     fprintf('--- k = %i -----------------\n',k-1)   % print time step
 
-    if k > 1                                                        % not initial condition
+    if k > 1 % not initial condition
         mV = memZono(V,xDims(k),vKeys(k-1)); % memZono version of the system uncertainty
-        X_nom{k} = X_nom{k-1}.map(F,xDims(k-1),xDims(k)) + mV; % determine actual state value
+        X_nom{k} = X_nom{k-1}.map(F,xDims(k-1),xDims(k)) + mV; % determine actual state value (X_nom_{k} = F X_nom_{k-1} \oplus V)
         X{k} = [X{k-1}; X_nom{k}]; % insert next time step to state-landmark zonotope
         
         x(:,k) = F*x(:,k-1) + G*u(:,k-1) + random_sample_zonotope(V); % determine actual state value
@@ -68,13 +68,13 @@ for k = 1:T     % loop over every time step
         r = landmarks{i}-x(:,k);    % actual vector displacement between vehicle and landmark
         theta = atan2(r(2),r(1));   % angle made relative to vehicle heading
 
-        if norm(r) <= landmark_radius               % vehicle can see landmark
+        if norm(r) <= landmark_radius  % vehicle can see landmark
             fprintf('k = %i --> Landmark %i\n',k-1,i);  % print time-step and landmark measured
             RH = rotate_zonotope(H,theta);              % rotated measurement noise zonotope
             r_m{k,i} = r + random_sample_zonotope(RH);  % noisy measurement of landmark
-            L{k,i} = relabelDims(X_nom{k},xDims(k),lDims(i)) ...
-                + memZono(RH + r_m{k,i},lDims(i)); % calculate landmark position from actual position and distance measurement (r_m and RH)
-            X{k} = X{k}.and(L{k,i},lCons(k,i));% add new landmark to X{k}
+            L{k,i} = relabelDims(X_nom{k},xDims(k),lDims(i)) ... L_{k,i} = X_nom_{k} \oplus measuremnt...
+                + memZono(RH + r_m{k,i},lDims(i)); % calculate landmark position from actual position and distance measurement (r_m and RH) ... L{k,i} = 
+            X{k} = X{k}.and(L{k,i}, lCons(k,i));% add new landmark to X{k}
         end
     end
 end

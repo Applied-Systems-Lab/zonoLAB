@@ -38,16 +38,10 @@ Z = evolveUnicycleMemZono(sinZono,cosZono,v,U,Z0,N);
 % liftZ = relabelDims(Z{i},{'x','y','theta'},{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)});
 for i = 1:N
     Z_lift{i} = relabelDims(Z{i},{'x','y','theta'},{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)});
-    % liftZ = memoryIntersection(liftZ, relabelDims(Z{i},{'x','y','theta'},{sprintf('x_%i',i),sprintf('y_%i',i),sprintf('theta_%i',i)})); 
 end
 liftZ = memZono.all(Z_lift{:}); %<== extended and()
 
-
-% % imagine that new data is received that informs the y value at time step 3
-% Z_newdata = memZono(zono(0.005,0.025),'z_pin');
-% Z_newdata.dimKeys = 'y_3';
-% liftZ_newdata = memoryIntersection(liftZ,Z_newdata,'pin_merge');
-
+% imagine that new data is received that informs the y value at time step 3
 Z_newdata = memZono(zono(0.005,0.025),'y_3','z_pin');
 liftZ_newdata = liftZ.and(Z_newdata,'pin_merge');
 
@@ -80,44 +74,39 @@ end
 
 %% Helper Functions
 function [Z] = evolveUnicycleMemZono(sinZono,cosZono,v,U,Z0,N)
+    % % labels
+    % varDims = @(vars,k) cellfun(@(var,k)sprintf('%s_k=%d,',var,k),vars,UniformOutput=false);
+    % sinDims = @(k) varDims({'theta','y'},k);
+    % cosDims = @(k) varDims({'theta','x'},k);
+    % uDims = @(k) varDims({'theta'},k);
+
+
     Z = {memZono(Z0,sprintf('X_1'))};
     % Give the state the correct dimension labels
     Z{1}.dimKeys = {'x','y','theta'};
     
     for k = 2:N
         %===== These need to be inside the loop so that each usage of sin/cos/U is memory independent
-        % sinMZ = memZono(sinZono,sprintf('sin_k%i',k));
-        % % sin theta updates the y state
-        % sinMZ.dimKeys = {'theta','y'};
         sinMZ = memZono(sinZono,{'theta','y'},sprintf('sin_k%i',k));
-    
-        % cosMZ = memZono(cosZono,sprintf('cos_k%i',k));
-        % % cos theta updates the x state
-        % cosMZ.dimKeys = {'theta','x'};
+
+        % cos theta updates the x state
         cosMZ = memZono(cosZono,{'theta','x'},sprintf('cos_k%i',k));
     
-        % UMZ = memZono(U,sprintf('U_%i',k-1));
-        % UMZ.dimKeys = {'theta'};
+        % u input
         UMZ = memZono(U,{'theta'},sprintf('U_%i',k-1));
         %=====
-    
-        % does X_{k+1}  = X_k
-        %      Y_{k+1}  = Y_k
-        %      TH_{k+1} = TH_K + U
-        Z{k} = Z{k-1} + UMZ;
-    
-        % does X_{k+1} = ... + v*cos(theta)
-        % only use Z{k-1}({'theta'}) otherwise the x and y dims would get intersected
-        % dX = v*memoryIntersection(cosMZ,Z{k-1}({'theta'}),sprintf('cos_x_%i',k));
-        % Z{k} = memorySum(Z{k}, dX({'x'})); % only add the x (the function value, not the theta input domain of cosine)
-        dX = v*Z{k-1}('theta').and(cosMZ,sprintf('cos_x_%i',k));
-        Z{k} = Z{k} + dX('x');
+        
+        % does dX = v*cos(theta)
+        dX = v*projection(Z{k-1}('theta').and(cosMZ,sprintf('cos_x_%i',k)),'x'); %<== should be a map...
 
-        % does Y_{k+1} = .. + v*sin(theta)
-        % dY = v*memoryIntersection(sinMZ,Z{k-1}({'theta'}),sprintf('sin_y_%i',k));
-        % Z{k} = memorySum(Z{k}, dY({'y'}));
-        dY = v*Z{k-1}('theta').and(sinMZ,sprintf('sin_y_%i',k));
-        Z{k} = Z{k} + dY('y');
+        % does dY = v*sin(theta)
+        dY = v*projection(Z{k-1}('theta').and(sinMZ,sprintf('sin_y_%i',k)),'y'); %<== should be a map...
+
+        % does X_{k+1}  = X_k + dX
+        %      Y_{k+1}  = Y_k + dY
+        %      TH_{k+1} = TH_K + U
+        Z{k} = Z{k-1} + [dX; dY; UMZ]; %<== sum but more 'efficient'/clear...
+        % Z{k} = memZono.sum(Z{k-1}, UMZ, dX, dY); %<== sums all w/ dim-aware 
     end
 end
 
