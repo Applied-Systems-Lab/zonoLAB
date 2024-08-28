@@ -11,9 +11,12 @@ function plot(obj,varargin)
     plot(Z_,varargin{:});
 
     % Label Axis with dims
-    xlabel(obj.dimKeys{1});
-    ylabel(obj.dimKeys{2});
-    if obj.n == 3; zlabel(obj.dimKeys{3}); end
+    ax = gca;
+    if isempty(ax.XLabel.String), xlabel(obj.dimKeys{1}); end
+    if isempty(ax.YLabel.String), ylabel(obj.dimKeys{2}); end
+    if obj.n == 3
+        if isempty(ax.ZLabel.String), zlabel(obj.dimKeys{3}); end; 
+    end
 
 end
 

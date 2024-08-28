@@ -1,9 +1,25 @@
 function varargout = subsref(obj, S)
     % Overload of varargout: https://www.mathworks.com/help/matlab/matlab_oop/code-patterns-for-subsref-and-subsasgn-methods.html
     if length(S) > 1
-        if strcmp(S(1).type,'()') && strcmp(S(2).type,'.')
-            [varargout{1:nargout}] = subsref(subsref(obj,S(1)),S(2:end));
-            return;
+        switch S(1).type
+            case '{}'
+                switch S(2).type
+                    case {'()','.'}
+                        [varargout{1:nargout}] = subsref(subsref(obj,S(1)),S(2:end));
+                        return;
+                end
+            case '()'
+                if strcmp(S(2).type,'.')
+                    [varargout{1:nargout}] = subsref(subsref(obj,S(1)),S(2:end));
+                    return;
+                end
+            case '.'
+                % for i = 2:length(S) %<== allow multiple function calls/properties (should be automatic so commented out)
+                %     if strcmp(S(i).type,'.')
+                %         [varargout{1:nargout}] = subsref(subsref(obj,S(1:(i-1))),S(i:end));
+                %         return;
+                %     end
+                % end
         end
     end
     switch S(1).type
@@ -30,10 +46,17 @@ function varargout = subsref(obj, S)
                     error('indexing not specificed')
             end
 
-            % TODO: Need error handling here if key doesn't exist
             i = getKeyIndices(i,obj.keys_.dims);
             j = getKeyIndices(j,obj.keys_.factors);
             k = getKeyIndices(k,obj.keys_.cons);
+
+            if any(~[i,j,k])
+                if any(~i)
+                    error("dims specified for indexing don't all exist");
+                else
+                    error('indexing refering to non-existant factors/dims');
+                end
+            end
 
             G_ = obj.G_(i,j);
             c_ = obj.c_(i,:);

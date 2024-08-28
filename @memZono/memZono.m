@@ -293,9 +293,10 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
         function obj = set.dimKeys(obj,in)
-            try obj.keys_.dims = obj.keysCheck(in,obj.n);
-            catch; error('dim key set issue'); 
-            end
+            obj.keys_.dims = obj.keysCheck(in,obj.n);
+            % try obj.keys_.dims = obj.keysCheck(in,obj.n);
+            % catch; error('dim key set issue'); 
+            % end
         end
         function obj = set.factorKeys(obj,in)
             try obj.keys_.factors = obj.keysCheck(in,obj.nG); 
@@ -348,7 +349,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         % Relabel Dims
         function out = relabelDims(obj,inDims,outDims)
             if ~iscell(inDims); inDims = obj.keysStartsWith(inDims).dimKeys; end
-            if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:numel(outDims)); end
+            if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:numel(inDims)); end
             out = obj.projection(inDims);
             out.dimKeys = outDims;
         end
@@ -456,7 +457,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         % end
 
         function out = affine(in,M,b,inDims,outDims)
-            
+
         end
 
     end
