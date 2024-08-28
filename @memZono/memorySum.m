@@ -24,7 +24,7 @@ function obj = memorySum(obj1,obj2)
     Z = memoryCartProd(obj1,obj2);
     [G_,c_,A_,b_,vset_,keys_] = Z.varOut(...
         'G_','c_','A_','b_','vset_','keys_');
-    [lbl,idx] = memZono.getKeysIndices(obj1,obj2);
+    [lbl,idx] = memZono.getAllKeyIndices(obj1,obj2);
     
     %% Shared Dimensions 
     % Minkowski Sum (modified for shared factors) is applied to shared dimensions

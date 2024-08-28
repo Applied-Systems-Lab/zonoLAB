@@ -65,7 +65,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
     end
 
     % I/O zono
-    properties (Dependent,Hidden,Access=private) %<== ensure that dimensions are maintained...
+    properties (Dependent,Hidden,Access=private) %<== unable to ensure private... ensure that dimensions are maintained...
         Z_          % Export to a base-zonotope class
     end
     properties (Dependent,Hidden)
@@ -123,18 +123,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
     end
-    methods (Static)
-        % Construction based on name of base objects
-        function obj = varNameConstructor(varargin)
-            for i = 1:nargin
-                varName = inputname(i);
-                obj_{i} = memZono(varargin{i},varName);
-            end
-            obj = vertcat(obj_{:});
-        end
-
-    end
-
     %% Parameter Set/Read
     methods
         % Matrices
@@ -143,12 +131,12 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             if isempty(obj.G_); obj.G_ = zeros(obj.n,0); end
             out = obj.G_; 
         end
-        function out = get.c_(obj); out = obj.c_; end
+        function out = get.c_(obj); out = obj.c_; end %<== no checks included
         function out = get.A_(obj)
             if isempty(obj.A_); obj.A_ = zeros(0,obj.nG); end
             out = obj.A_; 
         end
-        function out = get.b_(obj); out = obj.b_; end
+        function out = get.b_(obj); out = obj.b_; end %<== no checks included
 
         % hybZono Matrices
         function out = get.Gc_(obj); out = obj.G_(:,obj.vset_); end
@@ -167,7 +155,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function nG = get.nG(obj); nG = size(obj.G_,2); end
         function nC = get.nC(obj); nC = size(obj.A_,1); end
         function sz = get.sz(obj); sz = [obj.n,obj.nG,obj.nC]; end
-        % hybZono dims
+        % hybZono c/b factors
         function nGc = get.nGc(obj); nGc = sum(obj.vset_); end
         function nGb = get.nGb(obj); nGb = sum(~obj.vset_); end
     end
@@ -193,15 +181,14 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 out = false;
             end
         end
+
+        % Get base abstractZono class
         function out = get.baseClass(obj)
             if all(obj.vset_)
-                if isempty(obj.A_)
-                    out = 'zono';
-                else
-                    out = 'conZono';
+                if isempty(obj.A_), out = 'zono';
+                else, out = 'conZono'; 
                 end
-            else
-                out = 'hybZono';
+            else, out = 'hybZono';
             end
         end
 
@@ -218,21 +205,10 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                         obj.Ac_,obj.Ab_,obj.b_);
             end
         end
+
         % Output Specific Dimensions
         function out = Z(obj,dims)
             out = projection(obj,dims).Z_;
-        end
-
-        % Output specific properties
-        function varargout = varOut(obj,varargin)
-            for i = 1:numel(varargin)
-                varargout{i} = obj.(varargin{i});
-            end
-        end
-        % output all data
-        function varargout = exportAllData(obj)
-            fields = {'G_','c_','A_','b_','vset_','keys_'};
-            for i = 1:numel(fields); varargout{i} = obj.(fields{i}); end
         end
 
         % Setter function for underlying zonotope data
@@ -267,7 +243,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
     end
     
-    %% Labeling
+    %% Labeling 
     methods
         % Key Getter Functions
         function out = get.keys_(obj)
@@ -275,18 +251,18 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
         function out = get.keys(obj)
             % out = obj.keys_; 
-            out = structfun(@(x)(x'), obj.keys_,UniformOutput=false);
+            out = structfun(@(x)(x'), obj.keys_,UniformOutput=false); %<== here for visibility in MATLAB
         end
         function out = get.dimKeys(obj); out = obj.keys_.dims; end
         function out = get.factorKeys(obj); out = obj.keys_.factors; end
         function out = get.conKeys(obj); out = obj.keys_.cons; end
             
         % Key Setter Functions
-        function obj = set.keys(obj,in) %<-- add better checks?
+        function obj = set.keys(obj,in)
+            % TODO: Add keys checks???
             if isstruct(in)
                 obj.keys_ = in;
             else 
-                % error("don't set this way")
                 obj.dimKeys = in;
                 obj.factorKeys = in;
                 obj.conKeys = in;
@@ -294,19 +270,12 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
         function obj = set.dimKeys(obj,in)
             obj.keys_.dims = obj.keysCheck(in,obj.n);
-            % try obj.keys_.dims = obj.keysCheck(in,obj.n);
-            % catch; error('dim key set issue'); 
-            % end
         end
         function obj = set.factorKeys(obj,in)
-            try obj.keys_.factors = obj.keysCheck(in,obj.nG); 
-            catch; error('factor key set issue');
-            end
+            obj.keys_.factors = obj.keysCheck(in,obj.nG); 
         end
         function obj = set.conKeys(obj,in)
-            try obj.keys_.cons = obj.keysCheck(in,obj.nC);
-            catch; error('con key set issue');
-            end
+            obj.keys_.cons = obj.keysCheck(in,obj.nC);
         end
     end
 
@@ -317,6 +286,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             out = arrayfun(@(num){labeler(prefix,num)},nums);
         end
     end
+    
     methods
         % Create keys from a patern
         function keys_ = keysStartsWith(obj,pattern)
@@ -329,22 +299,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 end
             end
         end
-
-        % % Relabel all keys by adding a suffix
-        % function out = relabel(obj,s,fields)
-        %     arguments
-        %         obj
-        %         s
-        %         fields = {'dims','factors','cons'}
-        %     end
-        %     keys_ = obj.keys_;
-        %     for field = string(fields)
-        %         for i = 1:numel(obj.keys_.(field))
-        %             keys_.(field){i} = append(obj.keys_.(field){i},s);
-        %         end
-        %     end
-        %     out = memZono(obj,keys_);
-        % end
         
         % Relabel Dims
         function out = relabelDims(obj,inDims,outDims)
@@ -377,6 +331,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
 
+        % Get all unique keys
         function [k1,ks,k2] = getUniqueKeys(in1,in2)
             if isempty(in1) || isempty(in2)
                 ks = {};
@@ -389,6 +344,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
 
+        % Finds key indices
         function [idxk1,idxks1,idxks2,idxk2] = getKeyIndices(in1,in2)
             [k1,ks,k2] = memZono.getUniqueKeys(in1,in2);
 
@@ -411,7 +367,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
 
-        function [lbl,idx] = getKeysIndices(obj1,obj2)
+        function [lbl,idx] = getAllKeyIndices(obj1,obj2)
             %% Keys
             % shared dims
             [lbl.d1,lbl.ds,lbl.d2] = memZono.getUniqueKeys(obj1.dimKeys,obj2.dimKeys);
@@ -434,35 +390,10 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         obj = memorySum(obj1,obj2); % Minkowski Sum
         obj = memoryCartProd(obj1,obj2); % cartisian product
         obj = cartProd(obj1,obj2,dims1,dims2,options); % external cartisian product
-
-        % Additional Methods
-        % function out = linMap(in,M,inDims,outDims)
-        %     if ~iscell(inDims)
-        %         if size(M,2) == 1; inDims = {inDims}; 
-        %         else; inDims = memZono.genKeys(inDims,1:size(M,2)); end
-        %     end
-        %     if ~iscell(outDims)
-        %         if size(M,1) == 1; outDims = {outDims}; 
-        %         else;  outDims = memZono.genKeys(outDims,1:size(M,1)); end
-        %     end
-        %     out = in.transform([],M,inDims,outDims,retainExtraDims=false);%.projection(outDims);
-        % end
-
-        % % Copy constructor (allows relabeling dimension)
-        % function out = copy(obj,inDims,outDims)
-        %     if ~iscell(inDims); inDims = obj.keysStartsWith(inDims).dimKeys; end
-        %     if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:numel(outDims)); end
-        %     out = obj.projection(inDims);
-        %     out.dimKeys = outDims;
-        % end
-
-        function out = affine(in,M,b,inDims,outDims)
-
-        end
-
     end
+
+    %% Indexing  ----------------------------
     methods
-        %% Indexing
         B = subsref(A,S);
         % A = subsasgn(A,S,B); %<---- not completed        
 
@@ -479,26 +410,18 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
     end
 
-    %% direct overide/expansion of abstractZono methods to dimAware versions
+    %% Ploting ----------------------------
     methods
-        %% Ploting
         plot(obj,varargin);
-
-        % dimAwareFun
-        varargout = dimAwareFun(fun,obj,dimIn,dimOut,lbl,options);
-
-        % boundingBox
-        function out = boundingBox(in); out = dimAwareFun(@boundingBox,in); end
-        % convexHull
-        function out = convexHull(in1,in2); out = dimAwareFun(@convexHull,in1,in2); end
-
     end
 
     %% Overloading ----------------------------
     methods
+        % +, plus() - override for memorySum()
         function out = plus(in1,in2)
             out = in1.memorySum(in2);
         end
+        % *, mtimes() - override for transform (map?) ... mainly just scalers
         function out = mtimes(in1,in2)
             if isa(in2,'memZono')
                 out = in2.transform([],in1);%map(in2,in1); %<== flip the syntax order
@@ -506,15 +429,17 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 error('mtimes only overloaded for one direction');
             end
         end
+        % &, and() - overide memoryIntersection w/ checks
         function out = and(obj1,obj2,sharedDimLabels)
             if nargin == 2
                 error('Must Supply labels for shared dimensions')
             end
             out = memoryIntersection(obj1,obj2,sharedDimLabels);
         end
+
+        % Overide for memoryUnion w/ checks ... NOT IMPLIMENTED
         function obj = or(obj1,obj2)
             error('Union not yet implimented')
-            % obj = union(obj1,obj2);
         end
 
         % vertcat (Extended cartProd)
@@ -525,7 +450,8 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 obj = cartProd(obj,varargin{i});
             end
         end
-        % horzcat not yet decided (union? sum?)
+
+        % horzcat not yet decided (union? sum?) ... NOT IMPLIMENTED
         function obj = horzcat(varargin)
             if nargin == 1, obj = varargin{1};
             else, error('horzcat not defined');
@@ -599,6 +525,86 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
     end
+
+
+
+    %%%%%%%%%%%%%%%%%%%
+    % Questionable Usefulness/Not for Release
+    %%%%%%%%%%%%%%%%%%%
+    methods (Static)
+        % Construction based on name of base objects
+        %   (a helper method to combine multiple memZono/abstractZono objects based on name/size)
+        function obj = varNameConstructor(varargin)
+            for i = 1:nargin
+                varName = inputname(i);
+                obj_{i} = memZono(varargin{i},varName);
+            end
+            obj = vertcat(obj_{:});
+        end
+    end
+
+    methods
+
+        %% Affine (technically not needed but useful version instead of map version directly)
+        function out = affine(in,M,b,inDims,outDims)
+            out = in(inDims).transform(b,M,inDims,outDims);
+            % out = in.map(M,inDims,outDims) + memZono(b,outDims);
+        end
+
+        % % Relabel all keys by adding a suffix
+        % function out = relabel(obj,s,fields)
+        %     arguments
+        %         obj
+        %         s
+        %         fields = {'dims','factors','cons'}
+        %     end
+        %     keys_ = obj.keys_;
+        %     for field = string(fields)
+        %         for i = 1:numel(obj.keys_.(field))
+        %             keys_.(field){i} = append(obj.keys_.(field){i},s);
+        %         end
+        %     end
+        %     out = memZono(obj,keys_);
+        % end
+
+        %%% These are just direct versions of abstractZono methods... (not for initial release)
+        % dimAwareFun
+        varargout = dimAwareFun(fun,obj,dimIn,dimOut,lbl,options);
+        % boundingBox
+        function out = boundingBox(in); out = dimAwareFun(@boundingBox,in); end
+        % convexHull
+        function out = convexHull(in1,in2); out = dimAwareFun(@convexHull,in1,in2); end
+
+    end
+            
+
+
+        % make these protected/private? --------------------------------------
+    methods 
+        % Output specific properties
+        function varargout = varOut(obj,varargin)
+            for i = 1:numel(varargin)
+                varargout{i} = obj.(varargin{i});
+            end
+        end
+        % output all data
+        function varargout = exportAllData(obj)
+            fields = {'G_','c_','A_','b_','vset_','keys_'};
+            for i = 1:numel(fields); varargout{i} = obj.(fields{i}); end
+        end
+
+    end
+
+
+
+
+
+
+
+
+
+
+
 
 
 

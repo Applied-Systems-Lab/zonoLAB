@@ -7,7 +7,7 @@ function obj = memoryCartProd(obj1,obj2)
     end
 
     % Grab Key Indices
-    [lbl,idx] = memZono.getKeysIndices(obj1,obj2);
+    [lbl,idx] = memZono.getAllKeyIndices(obj1,obj2);
 
     %% Factor-based Memory Cartisian Product
     G_ = [
