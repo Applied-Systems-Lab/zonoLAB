@@ -40,21 +40,22 @@ function obj = memorySum(obj1,obj2)
         keys_.dims = [keys_.dims, lbl.ds];
     end
 
-    %% Shared Constraints
-    if ~isempty(lbl.cs)
-        % TODO: The following if seems fragile.  Not clear constraints will always be exactly the same coefficients? (could be multiplied by a scalar?)
-        if all(obj1.A_(idx.cs1,idx.ks1) ~= obj2.A_(idx.cs2,idx.ks2),'all') || all(obj1.b_(idx.cs1) ~= obj2.b_(idx.cs2),'all')
-            error('Shared Constraints are not identical')
-        end
-        A_ = [A_;
-            zeros(length(lbl.cs),length(lbl.k1)), obj1.A_(idx.cs1,idx.ks1), zeros(length(lbl.cs),length(lbl.k2))
-        ];
-        b_ = [b_;
-            obj1.b_(idx.cs1,:)
-        ];
-        % Labeling
-        keys_.cons = [keys_.cons,lbl.cs];
-    end
+    % (shared constraints in memoryCartProd)
+    % %% Shared Constraints
+    % if ~isempty(lbl.cs)
+    %     % TODO: The following if seems fragile.  Not clear constraints will always be exactly the same coefficients? (could be multiplied by a scalar?)
+    %     if all(obj1.A_(idx.cs1,idx.ks1) ~= obj2.A_(idx.cs2,idx.ks2),'all') || all(obj1.b_(idx.cs1) ~= obj2.b_(idx.cs2),'all')
+    %         error('Shared Constraints are not identical')
+    %     end
+    %     A_ = [A_;
+    %         zeros(length(lbl.cs),length(lbl.k1)), obj1.A_(idx.cs1,idx.ks1), zeros(length(lbl.cs),length(lbl.k2))
+    %     ];
+    %     b_ = [b_;
+    %         obj1.b_(idx.cs1,:)
+    %     ];
+    %     % Labeling
+    %     keys_.cons = [keys_.cons,lbl.cs];
+    % end
 
     %% Define memZono
     obj = memZono(G_,c_,A_,b_,vset_,keys_);

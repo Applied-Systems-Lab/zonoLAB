@@ -53,27 +53,37 @@ for i = 1:(length(bs)-1)
     % v's are inputs to ReLU, x's are outputs of ReLU
     layer = memZono([],[],[],[],[],[]);
     for j = 1:n2
-        relu_ij = memZono(relu,sprintf('phi_L%d_u%d_',i,j));
-        relu_ij.dimKeys = {sprintf('v_L%d_u%d_',i,j),sprintf('x_L%d_u%d_',i,j)};
-        layer = layer.memoryIntersection(relu_ij); % no new constraints will be added, so not providing labels
+        % relu_ij = memZono(relu,sprintf('phi_L%d_u%d_',i,j));
+        % relu_ij.dimKeys = {sprintf('v_L%d_u%d_',i,j),sprintf('x_L%d_u%d_',i,j)};
+        % layer = layer.memoryIntersection(relu_ij); % no new constraints will be added, so not providing labels
+
+        relu_ij = memZono(relu,{sprintf('v_L%d_u%d_',i,j),sprintf('x_L%d_u%d_',i,j)},sprintf('phi_L%d_u%d_',i,j));
+        layer = cartProd(layer,relu_ij); % no new constraints will be added, so not providing labels
     end
 
     vs = layer.keysStartsWith('v').dims; % inputs to a ReLU layer
     xs = layer.keysStartsWith('x').dims; % outputs of a ReLU layer
 
-    prev_layer = NN(prev_xs);  % select the output of the previous layer
-    prev_layer = prev_layer.transform(bs{i},Ws{i},prev_xs,vs); % map it through the weights and bias
-    layer = layer.memoryIntersection(prev_layer,sprintf('merge_L%i',i)); % memoryIntersection to force transformed previous layer to be equal to input to current layer
-    NN = NN.memoryIntersection(layer); % memoryIntersection with the previous parts of NN (no new constraints will be added, so not providing labels)
+    % prev_layer = NN(prev_xs);  % select the output of the previous layer
+    % prev_layer = prev_layer.transform(bs{i},Ws{i},prev_xs,vs); % map it through the weights and bias
+    % layer = layer.memoryIntersection(prev_layer,sprintf('merge_L%i',i)); % memoryIntersection to force transformed previous layer to be equal to input to current layer
+    % NN = NN.memoryIntersection(layer); % memoryIntersection with the previous parts of NN (no new constraints will be added, so not providing labels)
    
+
+    prev_layer = NN.map(Ws{i},prev_xs,vs)+memZono(bs{i},vs);
+    layer = layer.and(prev_layer,sprintf('merge_L%i',i));
+    NN = cartProd(NN,layer);
+    % prev_layer = prev_layer.transform(bs{i},Ws{i},prev_xs,vs); % map it through the weights and bias
+    % layer = layer.memoryIntersection(prev_layer,sprintf('merge_L%i',i)); % memoryIntersection to force transformed previous layer to be equal to input to current layer
     prev_xs = xs;
 end
 
 % make connections from final hidden layer to output
 ys = memZono.genKeys('y',1:length(bs{end}));
-prev_layer = NN(xs);
-prev_layer = prev_layer.transform(bs{end},Ws{end},xs,ys);
-NN = NN.memoryIntersection(prev_layer); % no new constraints will be added, so not providing labels
+prev_layer = map(NN(xs),Ws{end},xs,ys) + memZono(bs{end},ys);
+% prev_layer = prev_layer.transform(bs{end},Ws{end},xs,ys);
+% NN = NN.memoryIntersection(prev_layer); % no new constraints will be added, so not providing labels
+NN = cartProd(NN,prev_layer);
 
 NN = NN([x0s,ys]); % input-output map
 Y = NN(ys);  % output
