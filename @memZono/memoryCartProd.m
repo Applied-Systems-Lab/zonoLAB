@@ -1,4 +1,5 @@
-% Returns 
+% Returns cartProd of non-shared dimensions with factors/constraints
+% aligned
 function obj = memoryCartProd(obj1,obj2)
     arguments
         obj1 memZono

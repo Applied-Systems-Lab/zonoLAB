@@ -270,7 +270,10 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
     %% Labeling
     methods
         % Key Getter Functions
-        function out = get.keys(obj); 
+        function out = get.keys_(obj)
+            out = obj.keys_;
+        end
+        function out = get.keys(obj)
             % out = obj.keys_; 
             out = structfun(@(x)(x'), obj.keys_,UniformOutput=false);
         end
@@ -366,8 +369,10 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                 end
             elseif length(in) ~= n
                 error('keys not assigned correctly/wrong size');
+            elseif numel(unique(out))<numel(out)
+                error('Duplicate keys')
             else
-                error('keys broken');
+                error('keys broken somehow');
             end
         end
 
@@ -422,32 +427,25 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
     %% General Methods
     methods
         %% Set Operations
-        obj = transform(obj1,obj2,M,inDims,outDims); % Affine Mapping w/ dims
+        obj = map(obj1,obj2,inDims,outDims); % Maping function
+        obj = transform(obj1,obj2,M,inDims,outDims); % Affine Mapping w/ dims (outdated/to be replaced)
         obj = memoryIntersection(obj1,obj2,sharedDimLabels); % Intersection
         obj = memorySum(obj1,obj2); % Minkowski Sum
         obj = memoryCartProd(obj1,obj2); % cartisian product
         obj = cartProd(obj1,obj2,dims1,dims2,options); % external cartisian product
 
         % Additional Methods
-        function out = linMap(in,M,inDims,outDims)
-            if ~iscell(inDims)
-                if size(M,2) == 1; inDims = {inDims}; 
-                else; inDims = memZono.genKeys(inDims,1:size(M,2)); end
-            end
-            if ~iscell(outDims)
-                if size(M,1) == 1; outDims = {outDims}; 
-                else;  outDims = memZono.genKeys(outDims,1:size(M,1)); end
-            end
-            out = in.transform([],M,inDims,outDims,retainExtraDims=false);%.projection(outDims);
-        end
-
-        function out = map(in1,in2,inDims,outDims)
-            memZonoBools = [isa(in1,'memZono'),isa(in2,'memZono')];
-            if all(memZonoBools)
-                error('Map currently not yet implimented for functional mapping');
-            end
-            out = linMap(in1,in2,inDims,outDims);
-        end
+        % function out = linMap(in,M,inDims,outDims)
+        %     if ~iscell(inDims)
+        %         if size(M,2) == 1; inDims = {inDims}; 
+        %         else; inDims = memZono.genKeys(inDims,1:size(M,2)); end
+        %     end
+        %     if ~iscell(outDims)
+        %         if size(M,1) == 1; outDims = {outDims}; 
+        %         else;  outDims = memZono.genKeys(outDims,1:size(M,1)); end
+        %     end
+        %     out = in.transform([],M,inDims,outDims,retainExtraDims=false);%.projection(outDims);
+        % end
 
         % % Copy constructor (allows relabeling dimension)
         % function out = copy(obj,inDims,outDims)
@@ -456,6 +454,11 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         %     out = obj.projection(inDims);
         %     out.dimKeys = outDims;
         % end
+
+        function out = affine(in,M,b,inDims,outDims)
+            
+        end
+
     end
     methods
         %% Indexing
@@ -496,12 +499,17 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             out = in1.memorySum(in2);
         end
         function out = mtimes(in1,in2)
-            if isa(in2,'memZono'), out = in2.transform([],in1); %<== flip the syntax order
-            else, error('mtimes only overloaded for one direction');
+            if isa(in2,'memZono')
+                out = in2.transform([],in1);%map(in2,in1); %<== flip the syntax order
+            else
+                error('mtimes only overloaded for one direction');
             end
         end
-        function out = and(obj1,obj2)
-            out = memoryIntersection(obj1,obj2,'_and');
+        function out = and(obj1,obj2,sharedDimLabels)
+            if nargin == 2
+                error('Must Supply labels for shared dimensions')
+            end
+            out = memoryIntersection(obj1,obj2,sharedDimLabels);
         end
         function obj = or(obj1,obj2)
             error('Union not yet implimented')
@@ -536,7 +544,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function obj = all(varargin)
             obj = varargin{1};
             for i = 2:nargin %<========= not efficient
-                obj = memoryIntersection(obj,varargin{2},sprintf('_all_%d',i));
+                obj = memoryIntersection(obj,varargin{i},sprintf('_all_%d',i));
             end
         end
         % any (extended or) ... NOT IMPLIMENTED

@@ -14,16 +14,18 @@
 %       Z - memZono in R^p, where n,m < p <= n+m
 %           Shared dimensions are intersected, unshared dimensions kept
 %   Notes:
-%       Shared dimensions undergo an intersection and unshared dimensions 
+%       - Shared dimensions undergo an intersection and unshared dimensions 
 %       are maintained. Intersections will result in additional constraints 
 %       provided and labeled acording to sharedDimLabels.
-%       Factors are aligned to preserve memory.
+%       - Factors are aligned to preserve memory.
+%       - If there are no shared dimensions, memoryIntersection has the same
+%       output as cartProd().
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 function obj = memoryIntersection(obj1,obj2,sharedDimLabels)
     arguments
         obj1
         obj2
-        sharedDimLabels = {};
+        sharedDimLabels
     end
 
     %% Memory CartProd
