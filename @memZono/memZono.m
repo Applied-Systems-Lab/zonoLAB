@@ -570,10 +570,10 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         %%% These are just direct versions of abstractZono methods... (not for initial release)
         % dimAwareFun
         varargout = dimAwareFun(fun,obj,dimIn,dimOut,lbl,options);
-        % boundingBox
-        function out = boundingBox(in); out = dimAwareFun(@boundingBox,in); end
-        % convexHull
-        function out = convexHull(in1,in2); out = dimAwareFun(@convexHull,in1,in2); end
+        % % boundingBox
+        % function out = boundingBox(in); out = dimAwareFun(@boundingBox,in); end
+        % % convexHull
+        % function out = convexHull(in1,in2); out = dimAwareFun(@convexHull,in1,in2); end
 
     end
             
