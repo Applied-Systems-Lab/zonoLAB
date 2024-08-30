@@ -426,7 +426,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             if isa(in2,'memZono')
                 out = in2.transform([],in1);%map(in2,in1); %<== flip the syntax order
             else
-                error('mtimes only overloaded for one direction');
+                error("mtimes only overloaded for left multiplication");
             end
         end
         % &, and() - overide memoryIntersection w/ checks
@@ -444,7 +444,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
 
         % vertcat (Extended cartProd)
         function obj = vertcat(varargin)
-            warning('vertcat is not efficient yet')
+            % warning('vertcat is not efficient yet')
             obj = varargin{1};
             for i = 2:nargin %<========= not efficient
                 obj = cartProd(obj,varargin{i});
@@ -453,7 +453,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
 
         % horzcat not yet decided (union? sum?) ... NOT IMPLIMENTED
         function obj = horzcat(varargin)
-            if nargin == 1, obj = varargin{1};
+            if nargin == 1, obj = varargin{1}; %<= Retun if horzcat not needed
             else, error('horzcat not defined');
             end
         end

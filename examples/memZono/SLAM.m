@@ -73,7 +73,7 @@ for k = 1:T     % loop over every time step
             RH = rotate_zonotope(H,theta);              % rotated measurement noise zonotope
             r_m{k,i} = r + random_sample_zonotope(RH);  % noisy measurement of landmark
             L{k,i} = relabelDims(X_nom{k},xDims(k),lDims(i)) ... L_{k,i} = X_nom_{k} \oplus measuremnt...
-                + memZono(RH + r_m{k,i},lDims(i)); % calculate landmark position from actual position and distance measurement (r_m and RH) ... L{k,i} = 
+                + memZono(RH + r_m{k,i},lDims(i),lKeys(k,i)); % calculate landmark position from actual position and distance measurement (r_m and RH) ... L{k,i} = 
             X{k} = X{k}.and(L{k,i}, lCons(k,i));% add new landmark to X{k}
         end
     end

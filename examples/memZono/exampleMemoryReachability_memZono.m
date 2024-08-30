@@ -32,72 +32,85 @@ X_all = X_{1};
 % Terminal Set
 X_F = memZono(X_F,xDims(N));
 
-switch 'fullStack' %'withOverload' 'transform&memoryIntersection' 'fullStack'
-    case 'withOverload'
+switch 'method4' %'method1' 'method2' 'method3' 'method4'
+    case 'method1' % Calculate and Save
         % Time-evolution
         for k = 1:N-1
             % Current Input
             U_{k} = memZono(U_nom,uDims(k));
 
             % Step Update
-            X_{k+1} = X_{k}.map(A,xDims(k),xDims(k+1)) + U_{k}.map(B,uDims(k),xDims(k+1));
+            X_{k+1} = X_{k}.map(A,xDims(k),xDims(k+1)) ...
+                    + U_{k}.map(B,uDims(k),xDims(k+1));
 
             % Save Data
+            % X_all = [X_all; U_{k}; X_{k+1}]; %<---- vertcat() = cartprod()
+            % X_all = vertcat(X_all, U_{k}, X_{k}); %<---- vertcat() = cartprod()
             X_all = [
                 X_all; 
                 U_{k}; 
-                X_{k+1}]; %<---- vertcat() = cartprod()
+                X_{k+1}
+            ]; %<---- vertcat() = cartprod()
+            % ^ @jruths... which to include???
         end
-        X_inter = X_all.and(X_F,'terminal_cons'); %<-- memoryIntersection does the intersection
+        X_inter = X_all.and(X_F,'terminal_cons');
 
-    % case 'transform&memoryIntersection'
-    %     lbl_ = @(x,k) sprintf('%s_%d',x,k);
-    %     % Time-evolution
-    %     for k = 1:N-1
-    %         % Current Input
-    %         % U_{k} = memZono(U_nom,lbl_('u',k));
-    %         U_{k} = memZono(U_nom,sprintf('u_%d',k));
-    % 
-    %         % Step Update
-    %         newDims = memZono.genKeys(lbl_('x',k+1),1:n);
-    %         % newDims = {sprintf('x_%d_1',k+1),sprintf('x_%d_2',k+1)};
-    %         X_{k+1} = X_{k}.transform(...
-    %             U_{k}.transform([],B,U_{k}.dimKeys,newDims),A,...
-    %             X_{k}.dimKeys,newDims); %<== transform has affine A x + B
-    % 
-    %         % Save Data
-    %         X_all = X_all.memoryIntersection(U_{k});
-    %         X_all = X_all.memoryIntersection(X_{k+1});
-    %     end
-    %     X_inter = X_all.memoryIntersection(X_F,'terminal_cons'); % <--- intersect common dimensions
-
-    case 'fullStack'
+    case 'method2' % recursively calcualte and projection
+        % Use map(), plus(), cartProd(), and()
         % Time-Evolution
         for k = 1:N-1
             % Current Input
-            % X_all = cartProd(X_all,memZono(U_nom,uDims(k)));
             U_k = memZono(U_nom,uDims(k));
             X_all = cartProd(X_all, U_k);
-            % X_all = [X_all; U_k];
 
-            % map(), plus(), cartProd()
-            % X_new = X_all.map(A,xDims(k),xDims(k+1)) ...
-            %         + X_all.map(B,uDims(k),xDims(k+1));
-            % X_all = cartProd(X_all,X_new);
+            % Time-Update: X_{k+1} = A X_{k} \oplus B U_{k} 
             X_all = cartProd(X_all,...
                 plus(map(X_all,A,xDims(k),xDims(k+1)),...
                     map(X_all,B,uDims(k),xDims(k+1))));
-            % X_all = [X_all;
-            %     plus(map(X_all,A,xDims(k),xDims(k+1)),...
-            %         map(X_all,B,uDims(k),xDims(k)));
-            %     ];
         end
-
+        % Add Terminal Constraints
         X_inter = and(X_all,X_F,'terminal_cons');
 
+        % time-projections
+        for k=1:N; X_{k} = X_all(xDims(k)); end
+        for k=1:N-1; U_{k} = X_all(uDims(k)); end
+
+            
+    case 'method3' % map(), plus(), cartProd(), and()
+        % time-Evolution
+        for k = 1:N-1
+            % Current Input
+            X_all = cartProd(X_all,memZono(U_nom,uDims(k)));
+
+            % time-setp update
+            X_all = cartProd(X_all,...
+                plus(map(X_all,A,xDims(k),xDims(k+1)),...
+                    map(X_all,B,uDims(k),xDims(k+1))));
+        end
+        % add Terminal Constraints
+        X_inter = and(X_all,X_F,'terminal_cons');
+
+        % time-projections
         X_ = arrayfun(@(k) X_all(xDims(k)),1:N,UniformOutput=false);
         U_ = arrayfun(@(k) X_all(uDims(k)),1:N-1,UniformOutput=false);
+        % for k=1:N, X_{k} = projection(X_all,xDims(k)); end
+        % for k=1:N-1, U_{k} = projection(X_all,uDims(k)); end
+        %^ @jruths... which to include???????
 
+    case 'method4' % Recursive Map and Save
+        % Time-Evolution
+        for k = 1:N-1
+            % Current Input
+            U_{k} = memZono(U_nom,uDims(k));
+            X_all = [X_all; U_{k}];
+
+            % Time-Update
+            X_{k+1} = X_all.map(A,xDims(k),xDims(k+1)) ...
+                    + X_all.map(B,uDims(k),xDims(k+1));
+            X_all = [X_all; X_{k+1}];
+        end
+        % Add Terminal Constraints
+        X_inter = and(X_all,X_F,'terminal_cons');
 end
 
 %% Plotting
