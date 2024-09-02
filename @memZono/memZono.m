@@ -93,10 +93,8 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function obj = memZono(varargin)
             switch nargin
                 case 1
-                    if isa(varargin{1},'memZono') % <--- must have labels
-                        obj = varargin{1};
-                    else
-                        error('A memZono must be created with labels.')
+                    if isa(varargin{1},'memZono'), obj = varargin{1}; % <--- must have labels
+                    else, error('A memZono must be created with labels.')
                     end
                 case 2
                     obj.Z_ = varargin{1};
@@ -120,6 +118,36 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
                     obj.keys = varargin{6};
                 otherwise
                     error('Constructor not specified')
+            end
+        end
+        % Setter function for underlying zonotope data
+        function obj = set.Z_(obj,in)
+            switch class(in)
+                case {'double','sym','optim.problemdef.OptimizationVariable'}
+                    obj.c_ = in;
+                    obj.vset_ = true(1,0);
+                case 'zono'
+                    obj.G_ = in.G;
+                    obj.c_ = in.c;
+                    obj.vset_ = true(1,in.nG);
+                case 'conZono'
+                    obj.G_ = in.G;
+                    obj.c_ = in.c;
+                    obj.A_ = in.A;
+                    obj.b_ = in.b;
+                    obj.vset_ = true(1,in.nG);
+                case 'hybZono'
+                    obj.G_ = [in.Gc,in.Gb];
+                    obj.c_ = in.c;
+                    obj.A_ = [in.Ac,in.Ab];
+                    obj.b_ = in.b;
+                    obj.vset_ = [true(1,in.nGc),false(1,in.nGb)];    
+                case 'memZono'
+                    obj.G_ = in.G_;
+                    obj.c_ = in.c_;
+                    obj.A_ = in.A_;
+                    obj.b_ = in.b_;
+                    obj.vset_ = in.vset_;              
             end
         end
     end
@@ -159,87 +187,77 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         function nGc = get.nGc(obj); nGc = sum(obj.vset_); end
         function nGb = get.nGb(obj); nGb = sum(~obj.vset_); end
     end
-
-    %% In/Out with base Zonotope
+    %% General Methods
     methods
-        % test if special
-        function out = issym(obj)
-            % tests if any are symbolic
-            if any([isa(obj.G_,'sym'),isa(obj.c_,'sym'),...
-                    isa(obj.A_,'sym'),isa(obj.b_,'sym')])
-                out = true;
-            else
-                out = false;
-            end
+        %% Set Operations (memory-versions)---------------------
+        obj = cartProd(obj1,obj2,dims1,dims2,options); % User-facing Cartisian Product
+        obj = memoryCartProd(obj1,obj2); % Memory Cartisian Product
+        obj = memorySum(obj1,obj2); % Memory Minkowski Sum
+        obj = memoryIntersection(obj1,obj2,sharedDimLabels); % Memory Intersection Operation
+        % Transformations ---------------------------
+        obj = map(obj1,obj2,inDims,outDims); % Maping function
+        obj = transform(obj1,obj2,M,inDims,outDims); % Mapping w/ dims (outdated/to be replaced)
+        function out = affine(in,M,b,inDims,outDims) %% Affine (technically not needed but useful version instead of map version directly)
+            out = in(inDims).transform(b,M,inDims,outDims);
         end
-        function out = isnumeric(obj)
-            % tests if all are numeric
-            if all([isnumeric(obj.G_), isnumeric(obj.c_), ...
-                    isnumeric(obj.A_), isnumeric(obj.b_)])
-                out = true;
-            else
-                out = false;
-            end
-        end
+        % Plotting -------------------------
+        plot(obj, dims, varargin);
+        % Projection & Export ------------------
+        out = projection(obj,dims); % projection according to dims
+        function out = Z(obj,dims), out = projection(obj,dims).Z_; end
+        % Additional methods (implimentations of abstractZono methods in memZono)
+        [NN,Y] = reluNN(X,Ws,bs,a);
+        [s,x_out] = supportFunc(obj,dims,d_in)
+    end
 
-        % Get base abstractZono class
-        function out = get.baseClass(obj)
-            if all(obj.vset_)
-                if isempty(obj.A_), out = 'zono';
-                else, out = 'conZono'; 
-                end
-            else, out = 'hybZono';
+    %% Indexing  ----------------------------
+    methods
+        B = subsref(A,S);
+        % A = subsasgn(A,S,B); %<---- not overloaded
+    end
+
+    %% Overrides ----------------------------
+    methods
+        % +, plus() - override for memorySum()
+        function out = plus(in1,in2), out = in1.memorySum(in2); end
+        % *, mtimes() - override for transform (map?) ... mainly just scalers
+        function out = mtimes(in1,in2)
+            if isa(in2,'memZono'), out = in2.transform([],in1); %<== flip the syntax order
+            else, error("mtimes only overloaded for left multiplication");
             end
         end
-
-        % Output appropriate base zonotope
-        function Z = get.Z_(obj)
-            % warning('Ensure that your output dimensions line up correctly')
-            switch obj.baseClass
-                case 'zono'
-                    Z = zono(obj.G_,obj.c_);
-                case 'conZono'
-                    Z = conZono(obj.G_,obj.c_,obj.A_,obj.b_);
-                case 'hybZono'
-                    Z = hybZono(obj.Gc_,obj.Gb_,obj.c_,...
-                        obj.Ac_,obj.Ab_,obj.b_);
+        % &, and() - overide memoryIntersection w/ checks
+        function out = and(obj1,obj2,sharedDimLabels)
+            if nargin == 2, error('Must Supply labels for shared dimensions'); end
+            out = memoryIntersection(obj1,obj2,sharedDimLabels);
+        end
+        % Overide for memoryUnion w/ checks ... NOT IMPLIMENTED
+        function obj = or(obj1,obj2), error('Union not yet implimented'); end
+        % vertcat (Extended cartProd)
+        function obj = vertcat(varargin)
+            obj = varargin{1};
+            for i = 2:nargin, obj = cartProd(obj,varargin{i}); end %<========= not efficient
+        end
+        % horzcat not explicity defined... currently returns a cell array
+        function out = horzcat(varargin)
+            if nargin == 1, out = varargin{1}; %<= Retun if horzcat not needed
+            else, out = varargin; %<== returns as cell array
             end
         end
-
-        % Output Specific Dimensions
-        function out = Z(obj,dims)
-            out = projection(obj,dims).Z_;
+    end
+    methods (Static)
+        % sum (extended plus)
+        function out = sum(in)
+            out = in{1}; for i = 2:numel(in), out = plus(out,in{i}); end %<========= not efficient
         end
-
-        % Setter function for underlying zonotope data
-        function obj = set.Z_(obj,in)
-            switch class(in)
-                case {'double','sym','optim.problemdef.OptimizationVariable'}
-                    obj.c_ = in;
-                    obj.vset_ = true(1,0);
-                case 'zono'
-                    obj.G_ = in.G;
-                    obj.c_ = in.c;
-                    obj.vset_ = true(1,in.nG);
-                case 'conZono'
-                    obj.G_ = in.G;
-                    obj.c_ = in.c;
-                    obj.A_ = in.A;
-                    obj.b_ = in.b;
-                    obj.vset_ = true(1,in.nG);
-                case 'hybZono'
-                    obj.G_ = [in.Gc,in.Gb];
-                    obj.c_ = in.c;
-                    obj.A_ = [in.Ac,in.Ab];
-                    obj.b_ = in.b;
-                    obj.vset_ = [true(1,in.nGc),false(1,in.nGb)];    
-                case 'memZono'
-                    obj.G_ = in.G_;
-                    obj.c_ = in.c_;
-                    obj.A_ = in.A_;
-                    obj.b_ = in.b_;
-                    obj.vset_ = in.vset_;              
-            end
+        % all (extended and)
+        function out = all(in,ptn)
+            out = in{1}; if isemtpy(ptn), ptn = 'all'; end
+            for i = 2:numel(in), out = and(out,in{i},sprintf('_%s_%d',ptn,i)); end %<========= not efficient
+        end
+        % any (extended or) ... NOT IMPLIMENTED
+        function out = any(in)
+            out = in{1}; for i = 2:nargin, out = or(out,in{i}); end
         end
     end
     
@@ -278,14 +296,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             obj.keys_.cons = obj.keysCheck(in,obj.nC);
         end
     end
-
-    %% Generate Keys
-    methods (Static)
-        function [out] = genKeys(prefix,nums)
-            labeler = @(prefix,num)sprintf('%s_%i',prefix,num);
-            out = arrayfun(@(num){labeler(prefix,num)},nums);
-        end
-    end
     
     methods
         % Create keys from a patern
@@ -308,35 +318,35 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             out.dimKeys = outDims;
         end
     end
+
     %% Internal Keys Operations
     methods (Static)
+        % Generate Keys
+        function [out] = genKeys(prefix,nums)
+            labeler = @(prefix,num)sprintf('%s_%i',prefix,num);
+            out = arrayfun(@(num){labeler(prefix,num)},nums);
+        end
+
+        % Do Keys Check
         function out = keysCheck(in,n)
             % keysCheck(in,n) - checks to ensure the keys(in) is structured
             % currently for a dimension of n
             if n == 0; out = []; return; end
             if ~iscell(in); in = cellstr(in); end
-            if length(in) == n
-                out = in; 
+            if length(in) == n, out = in; 
             elseif isscalar(in)
                 out{n} = [];
-                for i = 1:n
-                    out{i} = sprintf('%s_%d',in{1},i);
-                end
-            elseif length(in) ~= n
-                error('keys not assigned correctly/wrong size');
-            elseif numel(unique(out))<numel(out)
-                error('Duplicate keys')
-            else
-                error('keys broken somehow');
+                for i = 1:n, out{i} = sprintf('%s_%d',in{1},i); end
+            elseif length(in)~=n, error('keys not assigned correctly/wrong size');
+            elseif numel(unique(out))<numel(out), error('Duplicate keys')
+            else, error('keys broken somehow');
             end
         end
 
         % Get all unique keys
         function [k1,ks,k2] = getUniqueKeys(in1,in2)
             if isempty(in1) || isempty(in2)
-                ks = {};
-                k1 = in1;
-                k2 = in2;
+                ks = {}; k1 = in1; k2 = in2;
             else
                 ks = intersect(in1,in2);
                 k1 = setdiff(in1,ks);
@@ -381,108 +391,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
     end
 
-    %% General Methods
-    methods
-        %% Set Operations
-        obj = map(obj1,obj2,inDims,outDims); % Maping function
-        obj = transform(obj1,obj2,M,inDims,outDims); % Affine Mapping w/ dims (outdated/to be replaced)
-        obj = memoryIntersection(obj1,obj2,sharedDimLabels); % Intersection
-        obj = memorySum(obj1,obj2); % Minkowski Sum
-        obj = memoryCartProd(obj1,obj2); % cartisian product
-        obj = cartProd(obj1,obj2,dims1,dims2,options); % external cartisian product
-    end
-
-    %% Indexing  ----------------------------
-    methods
-        B = subsref(A,S);
-        % A = subsasgn(A,S,B); %<---- not completed        
-
-        % Projection is defined for internal use - subsref (indexing) is simpilar syntax
-        function out = projection(obj,dims)
-            if ~iscell(dims) % if not already in cell form
-                if strcmp(dims,':'), dims = obj.dimKeys;
-                else, dims = obj.keysStartsWith(dims).dims;
-                end
-            end
-            [~,idx] = ismember(dims,obj.dimKeys);
-            keys_out = obj.keys_; keys_out.dims = dims;
-            out = memZono(obj.G_(idx,:),obj.c_(idx,:),obj.A_,obj.b_,obj.vset_,keys_out);
-        end
-    end
-
-    %% Ploting ----------------------------
-    methods
-        plot(obj,varargin);
-    end
-
-    %% Overloading ----------------------------
-    methods
-        % +, plus() - override for memorySum()
-        function out = plus(in1,in2)
-            out = in1.memorySum(in2);
-        end
-        % *, mtimes() - override for transform (map?) ... mainly just scalers
-        function out = mtimes(in1,in2)
-            if isa(in2,'memZono')
-                out = in2.transform([],in1);%map(in2,in1); %<== flip the syntax order
-            else
-                error("mtimes only overloaded for left multiplication");
-            end
-        end
-        % &, and() - overide memoryIntersection w/ checks
-        function out = and(obj1,obj2,sharedDimLabels)
-            if nargin == 2
-                error('Must Supply labels for shared dimensions')
-            end
-            out = memoryIntersection(obj1,obj2,sharedDimLabels);
-        end
-
-        % Overide for memoryUnion w/ checks ... NOT IMPLIMENTED
-        function obj = or(obj1,obj2)
-            error('Union not yet implimented')
-        end
-
-        % vertcat (Extended cartProd)
-        function obj = vertcat(varargin)
-            % warning('vertcat is not efficient yet')
-            obj = varargin{1};
-            for i = 2:nargin %<========= not efficient
-                obj = cartProd(obj,varargin{i});
-            end
-        end
-
-        % horzcat not yet decided (union? sum?) ... NOT IMPLIMENTED
-        function obj = horzcat(varargin)
-            if nargin == 1, obj = varargin{1}; %<= Retun if horzcat not needed
-            else, error('horzcat not defined');
-            end
-        end
-    end
-
-    methods (Static)
-        % sum (extended plus)
-        function obj = sum(varargin)
-            obj = varargin{1};
-            for i = 2:nargin %<========= not efficient
-                obj = plus(obj,varargin{i});
-            end
-        end
-        % all (extended and)
-        function obj = all(varargin)
-            obj = varargin{1};
-            for i = 2:nargin %<========= not efficient
-                obj = memoryIntersection(obj,varargin{i},sprintf('_all_%d',i));
-            end
-        end
-        % any (extended or) ... NOT IMPLIMENTED
-        function obj = any(varargin)
-            obj = varargin{1};
-            for i = 2:nargin
-                obj = or(obj,varargin{2});
-            end
-        end
-    end
-
     %% Input/Output and Display
     methods
         % zono data as tables
@@ -524,8 +432,51 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             else, out = [];
             end
         end
-    end
+        
+        % Get base abstractZono class
+        function out = get.baseClass(obj)
+            if all(obj.vset_)
+                if isempty(obj.A_), out = 'zono';
+                else, out = 'conZono'; 
+                end
+            else, out = 'hybZono';
+            end
+        end
 
+        % Output appropriate base zonotope
+        function Z = get.Z_(obj)
+            % warning('Ensure that your output dimensions line up correctly')
+            switch obj.baseClass
+                case 'zono'
+                    Z = zono(obj.G_,obj.c_);
+                case 'conZono'
+                    Z = conZono(obj.G_,obj.c_,obj.A_,obj.b_);
+                case 'hybZono'
+                    Z = hybZono(obj.Gc_,obj.Gb_,obj.c_,...
+                        obj.Ac_,obj.Ab_,obj.b_);
+            end
+        end
+
+        % test if special
+        function out = issym(obj)
+            % tests if any are symbolic
+            if any([isa(obj.G_,'sym'),isa(obj.c_,'sym'),...
+                    isa(obj.A_,'sym'),isa(obj.b_,'sym')])
+                out = true;
+            else
+                out = false;
+            end
+        end
+        function out = isnumeric(obj)
+            % tests if all are numeric
+            if all([isnumeric(obj.G_), isnumeric(obj.c_), ...
+                    isnumeric(obj.A_), isnumeric(obj.b_)])
+                out = true;
+            else
+                out = false;
+            end
+        end
+    end
 
 
     %%%%%%%%%%%%%%%%%%%
@@ -541,45 +492,9 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
             obj = vertcat(obj_{:});
         end
-    end
+    end         
 
-    methods
-
-        %% Affine (technically not needed but useful version instead of map version directly)
-        function out = affine(in,M,b,inDims,outDims)
-            out = in(inDims).transform(b,M,inDims,outDims);
-            % out = in.map(M,inDims,outDims) + memZono(b,outDims);
-        end
-
-        % % Relabel all keys by adding a suffix
-        % function out = relabel(obj,s,fields)
-        %     arguments
-        %         obj
-        %         s
-        %         fields = {'dims','factors','cons'}
-        %     end
-        %     keys_ = obj.keys_;
-        %     for field = string(fields)
-        %         for i = 1:numel(obj.keys_.(field))
-        %             keys_.(field){i} = append(obj.keys_.(field){i},s);
-        %         end
-        %     end
-        %     out = memZono(obj,keys_);
-        % end
-
-        %%% These are just direct versions of abstractZono methods... (not for initial release)
-        % dimAwareFun
-        varargout = dimAwareFun(fun,obj,dimIn,dimOut,lbl,options);
-        % % boundingBox
-        % function out = boundingBox(in); out = dimAwareFun(@boundingBox,in); end
-        % % convexHull
-        % function out = convexHull(in1,in2); out = dimAwareFun(@convexHull,in1,in2); end
-
-    end
-            
-
-
-        % make these protected/private? --------------------------------------
+    % make these protected/private? --------------------------------------
     methods 
         % Output specific properties
         function varargout = varOut(obj,varargin)
@@ -592,24 +507,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             fields = {'G_','c_','A_','b_','vset_','keys_'};
             for i = 1:numel(fields); varargout{i} = obj.(fields{i}); end
         end
-
     end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 end
 
