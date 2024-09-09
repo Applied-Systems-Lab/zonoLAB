@@ -2,39 +2,17 @@ function varargout = subsref(obj, S)
     % Overload of varargout: https://www.mathworks.com/help/matlab/matlab_oop/code-patterns-for-subsref-and-subsasgn-methods.html
     if length(S) > 1
         switch S(1).type
-            % case '{}' %<== should always work... so commented out
-            %     switch S(2).type
-            %         case {'()','.'}
-            %             [varargout{1:nargout}] = subsref(subsref(obj,S(1)),S(2:end));
-            %             return;
-            %     end
             case '()'
-                switch S(2).type
+                switch S(2).type  %<== to allow indexing before calling a funciton
                     case '.'
                         [varargout{1:nargout}] = subsref(subsref(obj,S(1)),S(2:end));
                         return;
                 end
-            % case '.'
-                % for i = 2:length(S) %<== allow multiple function calls/properties (should be automatic so commented out)
-                %     if strcmp(S(i).type,'.')
-                %         [varargout{1:nargout}] = subsref(subsref(obj,S(1:(i-1))),S(i:end));
-                %         return;
-                %     end
-                % end
         end
     end
     switch S(1).type
-        case '{}'
+        case {'{}','.'}
             [varargout{1:nargout}] = builtin('subsref', obj, S);
-        case '.'
-            % if ismember(S(1).subs,{'boundingBox','plot','bounds','lb','ub'}) %<=== explicitly calls these specific methods
-            %     [varargout{1:nargout}] = builtin('subsref', Z(obj,obj.dimKeys), S); %<== calls w/ assumption that dims are originally indexed
-            %     for i = 1:numel(varargout)
-            %         varargout{i} = addDimKeys(varargout{i},obj,S(1).subs);
-            %     end
-            % else
-                [varargout{1:nargout}] = builtin('subsref', obj, S);
-            % end
         case '()'
             switch numel(S(1).subs)
                 case 1
@@ -70,29 +48,6 @@ function varargout = subsref(obj, S)
             keys_.cons = obj.keys_.cons(k);
 
             varargout{1} = memZono(G_,c_,A_,b_,vset_,keys_);
-
-
-
-            % i = getKeyIndices(i,obj.dimKeys);
-            % j = getKeyIndices(j,obj.factorKeys);
-            % k = getKeyIndices(k,obj.conKeys);
-            % if ischar(i)
-            %     keys_.dims = obj.dimKeys;
-            % else
-            %     keys_.dims = obj.dimKeys(i);
-            % end
-            % if ischar(j)
-            %     keys_.factors = obj.factorKeys;
-            % else
-            %     keys_.factors = obj.factorKeys(j);
-            % end
-            % if ischar(k)
-            %     keys_.cons = obj.conKeys;
-            % else
-            %     keys_.cons = obj.conKeys(k);
-            % end
-
-            % varargout{1} = memZono(G_,c_,A_,b_,vset_,keys_);
     end
 end
 

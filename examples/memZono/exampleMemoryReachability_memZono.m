@@ -19,12 +19,12 @@ uDims = @(k) {sprintf('u_k=%d',k)};
 
 % Initial Conditions
 X_0 = zono(diag([1,2]),zeros(2,1));
-X_{1} = memZono(X_0,xDims(1));
+X_{1} = memZono(X_0,xDims(1));  %<== lbl not needed since n=nG
 X_all = X_{1};
 
 % Terminal Set
 X_F = zono(0.25*eye(2),ones(2.,1));
-X_F = memZono(X_F,xDims(N));
+X_F = memZono(X_F,xDims(N)); %<== lbl not needed since n=nG
 
 % Nominal Input Set
 U_nom = zono(1.5,0);
@@ -35,7 +35,7 @@ switch 'method4' %'method1' 'method2' 'method3' 'method4'
 % Calculate and Save
 for k = 1:N-1 % Time-evolution
     % Current Input
-    U_{k} = memZono(U_nom,uDims(k));
+    U_{k} = memZono(U_nom,uDims(k));  %<== lbl not needed since n = nG
     % Step Update
     X_{k+1} = X_{k}.map(A,xDims(k),xDims(k+1)) ...
             + U_{k}.map(B,uDims(k),xDims(k+1));
@@ -49,7 +49,7 @@ X_inter = X_all.and(X_F, 'terminal_cons');
 % map(), plus(), cartProd(), and()
 for k = 1:N-1 % Time-Evolution
 % Current Input
-U_k = memZono(U_nom,uDims(k));
+U_k = memZono(U_nom,uDims(k)); %<== lbl not needed since n = nG
 X_all = cartProd(X_all, U_k);
 % Step Update
 X_all = cartProd(X_all,...
@@ -73,7 +73,7 @@ for k=1:N-1;U_{k}=X_all(uDims(k));end
 % time-Evolution
 for k = 1:N-1
     % Current Input
-    X_all = cartProd(X_all,memZono(U_nom,uDims(k)));
+    X_all = cartProd(X_all,memZono(U_nom,uDims(k))); %<== lbl not needed since n = nG
     % Recursive Set Update
     X_all = cartProd(X_all,...
         plus(map(X_all,A,xDims(k),xDims(k+1)),...
@@ -89,7 +89,7 @@ U_ = arrayfun(@(k) X_all(uDims(k)),1:N-1,UniformOutput=false);
 % Time-Evolution
 for k = 1:N-1
     % Current Input
-    U_{k} = memZono(U_nom,uDims(k));
+    U_{k} = memZono(U_nom,uDims(k)); %<== lbl not needed since n = nG
     X_all = [X_all; U_{k}];
     % Time-Update
     X_{k+1} = X_all.map(A,xDims(k),xDims(k+1)) ...

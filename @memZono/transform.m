@@ -67,8 +67,6 @@ function obj = transform(obj1,obj2,M, inDims, outDims, options)
         else % Case 1: no multiplication, so dimensions do not change with only the sum
             outDims = inDims;
         end
-    % TODO - need to check that if outDims is specified, outDims are all valid labels?
-    % (to: @jruths) - this check is dependent on the size of M thus I believe check is done already in other checks (from: @jonaswagner2826)
     end
 
     % inDims should match the input dimension of the linear map M, if it exists

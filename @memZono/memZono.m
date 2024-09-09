@@ -22,7 +22,7 @@
 %       zonoLAB classes but adds dimensional awareness and memory-encoding/ 
 %       preservation within the set operations.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
+classdef memZono
 
     %% Data
     properties (Hidden,Access=private) % Underlying data structure
@@ -154,7 +154,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
     %% Parameter Set/Read
     methods
         % Matrices
-        % Get Matrices
+        % Get Matrices  <=== Not For External Use
         function out = get.G_(obj) 
             if isempty(obj.G_); obj.G_ = zeros(obj.n,0); end
             out = obj.G_; 
@@ -166,13 +166,13 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
         function out = get.b_(obj); out = obj.b_; end %<== no checks included
 
-        % hybZono Matrices
+        % hybZono Matrices  <=== Not For External Use
         function out = get.Gc_(obj); out = obj.G_(:,obj.vset_); end
         function out = get.Gb_(obj); out = obj.G_(:,~obj.vset_); end
         function out = get.Ac_(obj); out = obj.A_(:,obj.vset_); end
         function out = get.Ab_(obj); out = obj.A_(:,~obj.vset_); end
 
-        % Set hybZono Matrices
+        % Set hybZono Matrices  <=== Not For External Use
         function obj = set.Gc_(obj,in); obj.G_(:,obj.vset_) = in; end
         function obj = set.Gb_(obj,in); obj.G_(:,~obj.vset_) = in; end
         function obj = set.Ac_(obj,in); obj.A_(:,obj.vset_) = in; end
@@ -191,9 +191,9 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
     methods
         %% Set Operations (memory-versions)---------------------
         obj = cartProd(obj1,obj2,dims1,dims2,options); % User-facing Cartisian Product
-        obj = memoryCartProd(obj1,obj2); % Memory Cartisian Product
-        obj = memorySum(obj1,obj2); % Memory Minkowski Sum
-        obj = memoryIntersection(obj1,obj2,sharedDimLabels); % Memory Intersection Operation
+        obj = memoryCartProd(obj1,obj2); % Memory Cartisian Product <=== Not user-facing
+        obj = memorySum(obj1,obj2); % Memory Minkowski Sum  (overloaded by plus() )
+        obj = memoryIntersection(obj1,obj2,sharedDimLabels); % Memory Intersection Operation (overidden by and())
         % Transformations ---------------------------
         obj = map(obj1,obj2,inDims,outDims); % Maping function
         obj = transform(obj1,obj2,M,inDims,outDims); % Mapping w/ dims (outdated/to be replaced)
@@ -236,9 +236,9 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         % vertcat (Extended cartProd)
         function obj = vertcat(varargin)
             obj = varargin{1};
-            for i = 2:nargin, obj = cartProd(obj,varargin{i}); end %<========= not efficient
+            for i = 2:nargin, obj = cartProd(obj,varargin{i}); end %<========= Looping approach isn't optimized
         end
-        % horzcat not explicity defined... currently returns a cell array
+        % horzcat not explicity defined... currently returns a cell array of memZono() objects
         function out = horzcat(varargin)
             if nargin == 1, out = varargin{1}; %<= Retun if horzcat not needed
             else, out = varargin; %<== returns as cell array
@@ -264,12 +264,9 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
     %% Labeling 
     methods
         % Key Getter Functions
-        function out = get.keys_(obj)
-            out = obj.keys_;
-        end
+        function out = get.keys_(obj); out = obj.keys_; end
         function out = get.keys(obj)
-            % out = obj.keys_; 
-            out = structfun(@(x)(x'), obj.keys_,UniformOutput=false); %<== here for visibility in MATLAB
+            out = structfun(@(x)(x'), obj.keys_,UniformOutput=false); %<== here for easier visibility in MATLAB editor
         end
         function out = get.dimKeys(obj); out = obj.keys_.dims; end
         function out = get.factorKeys(obj); out = obj.keys_.factors; end
@@ -277,7 +274,6 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             
         % Key Setter Functions
         function obj = set.keys(obj,in)
-            % TODO: Add keys checks???
             if isstruct(in)
                 obj.keys_ = in;
             else 
@@ -310,7 +306,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
         
-        % Relabel Dims
+        % Relabel Dims (takes inDims of obj and returns projected result with outDims)
         function out = relabelDims(obj,inDims,outDims)
             if ~iscell(inDims); inDims = obj.keysStartsWith(inDims).dimKeys; end
             if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:numel(inDims)); end
@@ -319,15 +315,15 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
         end
     end
 
-    %% Internal Keys Operations
+    %% Internal Keys Operations 
     methods (Static)
-        % Generate Keys
+        % Generate keys from prefix  <=== Not For External Use
         function [out] = genKeys(prefix,nums)
             labeler = @(prefix,num)sprintf('%s_%i',prefix,num);
             out = arrayfun(@(num){labeler(prefix,num)},nums);
         end
 
-        % Do Keys Check
+        % Do Keys Check <=== Not For External Use
         function out = keysCheck(in,n)
             % keysCheck(in,n) - checks to ensure the keys(in) is structured
             % currently for a dimension of n
@@ -343,7 +339,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
 
-        % Get all unique keys
+        % Get all unique keys  <=== Not For External Use
         function [k1,ks,k2] = getUniqueKeys(in1,in2)
             if isempty(in1) || isempty(in2)
                 ks = {}; k1 = in1; k2 = in2;
@@ -354,7 +350,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
 
-        % Finds key indices
+        % Finds key indices  <=== Not For External Use
         function [idxk1,idxks1,idxks2,idxk2] = getKeyIndices(in1,in2)
             [k1,ks,k2] = memZono.getUniqueKeys(in1,in2);
 
@@ -377,6 +373,7 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
 
+        % Gets all key labels and indices for dims, factors, and cons  <=== Not For External Use
         function [lbl,idx] = getAllKeyIndices(obj1,obj2)
             %% Keys
             % shared dims
@@ -443,9 +440,8 @@ classdef memZono %< abstractZono %& matlab.mixin.CustomDisplay
             end
         end
 
-        % Output appropriate base zonotope
+        % Output appropriate base zonotope <=== Not For External Use
         function Z = get.Z_(obj)
-            % warning('Ensure that your output dimensions line up correctly')
             switch obj.baseClass
                 case 'zono'
                     Z = zono(obj.G_,obj.c_);
