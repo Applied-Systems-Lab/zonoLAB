@@ -61,14 +61,13 @@ for k=1:N %(evolve past N to get measurements)%
             Xall = Xall.and(L{k,i}, lCon(k,i));
         end
     end 
-    Xall_{k} = Xall; %<== save data
+    Xall_{k} = Xall; %<== save data snapshot
 
     % Time-Update
     V{k} = memZono(V0,vDim(k)); % System Noise at k
     X{k+1} = X{k}.map(A,xDim(k),xDim(k+1)) ... %<= rotate/new position
             + V{k}.map(B,vDim(k),xDim(k+1)); % <= System Noise Step-update
     Xall = [Xall; X{k+1}];
-    % Xall_{k+1} = Xall;
     x(:,k+1) = A*x(:,k) + B*random_sample_zonotope(V0); %<== actual realization
 end
 
@@ -111,6 +110,8 @@ end
 
 
 
+%%% Save Fig:
+saveas(fig,'ex_SLAM.png')
 
 
 
