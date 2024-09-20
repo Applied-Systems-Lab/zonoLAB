@@ -62,6 +62,7 @@ for k = 1:T     % loop over every time step
         X{k} = [X{k-1}; X_nom{k}]; % insert next time step to state-landmark zonotope
         
         x(:,k) = F*x(:,k-1) + G*u(:,k-1) + random_sample_zonotope(V); % determine actual state value
+        %(u is always 0...)
     end
 
     for i=1:num_l  % loop over each landmark
@@ -82,7 +83,7 @@ end
 
 %% plotting
 
-for k = 1:T % loop over every time step
+for k = 1:4%T % loop over every time step
 
     % open figure
     if mod(k,2) ~= 0
@@ -129,7 +130,7 @@ for k = 1:T % loop over every time step
 
         % plot zonotopes
         if last_measurement >= 1                        % ensure landmark has been measured
-            plot(X{k}(lDims(i)),'r',0.6);    % plot landmark zonotope
+            plot(X{k},lDims(i),'r',0.6);    % plot landmark zonotope
             plot(landmarks{i}(1),landmarks{i}(2),'bx'); % plot landmarks accurate location
             drawnow;
         end       
@@ -138,8 +139,8 @@ for k = 1:T % loop over every time step
     % plot state zonotopes
     for prev_k = 1:k                                        % plot all previous time step states
         plot(x(1,prev_k),x(2,prev_k),'k.','MarkerSize',12); % plot actual state
-        plot(X_nom{prev_k},'k',0.2);                  % plot unconstrained state zonotope
-        plot(X{k}(xDims(prev_k)),'g',0.3);     % plot constrained state zonotope
+        plot(X_nom{prev_k},xDims(prev_k),'k',0.2);                  % plot unconstrained state zonotope
+        plot(X{k},xDims(prev_k),'g',0.3);     % plot constrained state zonotope
         drawnow;
     end
     % xlim([-6 6]);ylim([-6 6]);
