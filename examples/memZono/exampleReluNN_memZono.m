@@ -3,11 +3,13 @@
 %   Exactly representing a neural network composed entirely of ReLU 
 %   activation functions as a hybrid zonotope.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-clear; close all;
+clear; %close all;
 % Parameters
 % Load parameters from mat file
 % This neural network approximates the function f = cos(X1)+sin(X2) over the domain [-5,5]x[-5,5]
-load(strcat("..",filesep,"Neural_Networks",filesep,"relu_sin_cos_2_20_10_10_1.mat"));
+% load(strcat("..",filesep,"Neural_Networks",filesep,"relu_sin_cos_2_20_10_10_1.mat"));
+load("examples\Neural_Networks\relu_sin_cos_2_20_10_10_1.mat")
+
 
 % Plotting function over the trained dataset
 figure('Position',[0,0,1500,300])
@@ -47,12 +49,13 @@ g11 = (x1_max - x1_min)/2;
 g22 = (x2_max - x2_min)/2;
 Gx = diag([g11, g22]);
 cx = zeros(2, 1);
-X = hybZono(Gx, [], cx, [], [], []);
+% X = hybZono(Gx, [], cx, [], [], []);
+X = memZono(zono(Gx,cx),'X');
 
 % Construct the output zonotope Z and the lifted input-output mapping XZ
 fprintf('Zonotope model: ')
 tic
-[NN,Y,NN_Z] = reluNN_memZono(X,Ws,bs,a);
+NN = reluNN(X,Ws,bs,a);
 toc
 
 % Z = NN_Z;
@@ -63,7 +66,7 @@ toc
 % Plot Hybrid Zonotope
 subplot(1,4,4)
 % figure
-plot(NN,'r',1);
+plot(NN.Z(NN.dimKeys),'r',1);
 grid on;
 title('Hybrid Zonotope')
 xlabel('$x_1$','interpreter','latex')

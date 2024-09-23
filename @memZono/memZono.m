@@ -473,6 +473,10 @@ classdef memZono
             end
         end
     end
+    methods (Static)
+        % Returns empty memZono
+        function out = empty(); out = memZono([],[],[],[],[],[]); end %<== add dimensions?
+    end
 
 
     %%%%%%%%%%%%%%%%%%%
