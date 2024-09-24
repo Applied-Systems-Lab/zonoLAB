@@ -178,7 +178,8 @@ x = -x0:xstep:x0;
 Y = f1(X1) + f2(X2);
 
 % error
-Y_Fm = X.and(Fm,'Xin').projection('y'); %<= map X through Fm and project to y
+Y_Fm = X.funMap(Fm,{'x1','x2'},{'y'},'Xin');
+% Y_Fm = X.and(Fm,'Xin').projection('y'); %<= map X through Fm and project to y
 Y_NN = NN('y'); %<= projection of NN along Y (already maps X)
 Y_E = Y_NN + -1*Y_Fm; %<== calc difference between them (w/ same input space factors)
 E = cartProd(X,Y_E); %<= combine together again...
@@ -342,17 +343,4 @@ function F_shift = makeFshift(shift,bnd,dimKeys,lbl)
     keys.factors = memZono.genKeys(lbl,1:size(G,2));
     keys.cons = memZono.genKeys(lbl,1:size(A,1));
     F_shift = memZono(G,c,A,b,vset,keys);
-end
-
-
-function y = FmEval(Fm,x,inDims,outDims)%<= dims = {x1,x2,y}
-    arguments
-        Fm
-        x
-        inDims = 'x';
-        outDims = 'y';
-    end
-    X = memZono(x,inDims);
-    Y_Fm = Fm.and(X,'eval');
-    y = Y_Fm
 end

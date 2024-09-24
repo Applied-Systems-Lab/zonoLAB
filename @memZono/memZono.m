@@ -200,6 +200,8 @@ classdef memZono
         function out = affine(in,M,b,inDims,outDims) %% Affine (technically not needed but useful version instead of map version directly)
             out = in(inDims).transform(b,M,inDims,outDims);
         end
+        out = linMap(in,M,inDims,outDims);
+        out = funMap(obj1,obj2,inDims,outDims,lbl,funInDims,funOutDims);
         % Plotting -------------------------
         plot(obj, dims, varargin);
         % Projection & Export ------------------
