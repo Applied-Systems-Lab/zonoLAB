@@ -243,7 +243,7 @@ classdef memZono
         % horzcat not explicity defined... currently returns a cell array of memZono() objects
         function out = horzcat(varargin)
             if nargin == 1, out = varargin{1}; %<= Retun if horzcat not needed
-            else, out = varargin; %<== returns as cell array
+            else, out = varargin(cellfun(@isempty,varargin)); %<== returns as cell array w/ only memZono objects
             end
         end
     end
@@ -310,7 +310,7 @@ classdef memZono
         
         % Relabel Dims (takes inDims of obj and returns projected result with outDims)
         function out = relabelDims(obj,inDims,outDims)
-            if ~iscell(inDims); inDims = obj.keysStartsWith(inDims).dimKeys; end
+            if ~iscell(inDims); inDims = obj.keysStartsWith(inDims).dims; end
             if ~iscell(outDims); outDims = memZono.genKeys(outDims,1:numel(inDims)); end
             out = obj.projection(inDims);
             out.dimKeys = outDims;

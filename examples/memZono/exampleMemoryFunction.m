@@ -1,6 +1,18 @@
 %% Example Function Creation
 clear; 
 % close all;
+%% Plot settings 
+set(0,'defaultLineLineWidth', 2)
+set(0,'defaultAxesFontName' , 'Times')
+set(0,'defaultTextFontName' , 'Times')
+set(0,'defaultAxesFontSize' , 18)
+set(0,'defaultTextFontSize' , 18)
+set(0,'defaulttextinterpreter','latex')
+set(0,'defaultlegendinterpreter','latex')
+set(0,'defaultAxesGridLineStyle','-.')
+
+
+
 
 % %% Function Setup
 % n = 11;
@@ -146,7 +158,7 @@ clear;
 % end
 
 
-if true
+if false
 
 %% Function Setup
 n = 11;
@@ -232,26 +244,59 @@ end
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-if false
+if true
+    
+    % Y_vol = memZono(zono(0.1,0),'y');
+    % Y_vol = 0*Y_vol;
+    vol = zono(5e-2,0);
+    
     % sin(x) - cos(x)
+    % n=11; x0 = 5; bd = [-x0,x0];
+    % Fm_sin = makeSOSfunc(@sin,n,bd,{'x_1','y_1'},'sin') + memZono(vol,'y_1','sin_vol');
+    % Fm_cos = makeSOSfunc(@cos,n,bd,{'x_2','y_2'},'cos') + memZono(vol,'y_2','cos_vol');
+    % Xin = memZono(zono(x0,0),'x');
+    % Ym_sin = Xin.and(relabelDims(Fm_sin,{'x_1','y_1'},{'x','y'}),'xsin').projection('y');
+    % Ym_cos = Xin.and(relabelDims(Fm_cos,{'x_2','y_2'},{'x','y'}),'xcos').projection('y');
     n=11; x0 = 5; bd = [-x0,x0];
-    F_sin = makeSOSfunc(@sin,n,bd,{'x','y'},'sin');
-    F_cos = makeSOSfunc(@cos,n,bd,{'x','y'},'cos');
+    Fm_cos = makeSOSfunc(@cos,n,bd,{'x','y'},'cos') + memZono(vol,'y','cos_vol');
+    Fm_sin = makeSOSfunc(@sin,n,bd,{'x','y'},'sin') + memZono(vol,'y','sin_vol');
     Xin = memZono(zono(x0,0),'x');
-    Y_sin = Xin.and(F_sin,'xsin').projection('y');
-    Y_cos = Xin.and(F_cos,'xcos').projection('y');
-    Y_sin_minus_cos = Y_sin + -1*Y_cos;
-    XY_cos_sin = [Xin; Y_sin_minus_cos]
+    Ym_cos = Xin.and(Fm_cos,'xcos').projection('y');
+    Ym_sin = Xin.and(Fm_sin,'xsin').projection('y');
+    % Ym_cos_mius_sin = Ym_cos + -1*Ym_sin;
+    % XYm_cos_sin = [Xin; Ym_cos_mius_sin]
+        
     
-    Y_vol = memZono(zono(0.1,0),'y');
-    
-    figure; hold on;
-    plot(F_sin+Y_vol,{'x','y'},'r');
-    plot(F_cos+Y_vol,{'x','y'},'b');
-    plot(XY_cos_sin+Y_vol,{'x','y'},'k');
+    fig = figure('WindowStyle','normal');
+    hold on;
+    t = tiledlayout(fig,1,1,"Padding","tight"); 
+    ax = nexttile; 
+    plot(Fm_cos,{'x','y'},'r'); p(1) = ax.Children(1); p(1).DisplayName='$\mathcal{F}_{cos}$';
+    plot(Fm_sin,{'x','y'},'g'); p(end+1) = ax.Children(1); p(end).DisplayName='$\mathcal{F}_{sin}$';
+    plot(Xin+Ym_cos+Ym_sin,{'x','y'},'b'); p(end+1) = ax.Children(1); p(end).DisplayName='$\mathcal{F}_{cos} + \mathcal{F}_{sin}$';
+    plot(Xin+Ym_cos+-1*Ym_sin,{'x','y'},'c'); p(end+1) = ax.Children(1); p(end).DisplayName='$\mathcal{F}_{cos} - \mathcal{F}_{sin}$';
+    % plot(Xin+3*Ym_cos+Ym_sin,{'x','y'},'y'); p(end+1) = ax.Children(1); p(end).DisplayName='$3\mathcal{F}_{cos} + \mathcal{F}_{sin}$';
 
+
+    Fm_sin_inter = relabelDims(Fm_sin,{'x','y'},{'x','inter'});
+    Fm_cos_inter = relabelDims(Fm_cos,{'x','y'},{'inter','y'});
+    Fm_cos_sin = Fm_sin_inter.and(Fm_cos_inter,'cos_inter_y');
+
+    plot(Fm_cos_sin,{'x','y'},'m'); p(end+1) = ax.Children(1); p(end).DisplayName='$\mathcal{F}_{cos} \circ \mathcal{F}_{sin}$';
+
+
+    % Plotting Settings
+    ax.Children = flipud(ax.Children);
+    legend('Interpreter','latex','Direction','reverse')    
+    set(p,'LineWidth',1);
+    grid on; %axis("square");
+    xlabel("dim = {`x'}");
+    ylabel("dim = {`y'}");
+
+    set(fig,'Position',[-2e3,1e3,1e3,5e2]); 
+    saveas(fig,'sin_cos_comp_1D.png');
 end
 
 
