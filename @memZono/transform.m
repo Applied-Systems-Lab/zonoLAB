@@ -6,8 +6,8 @@
 %       out = transform(X,[],M)       <= out = M*X
 %       out = transform(X,b,[])       <= out = X + b
 %       out = transform(X,b,M)     <= out = M*X + b
-%       out = transform(X,Y,[])       <= out = combine(X,Y)
-%       out = transform(X,Y,M)     <= out = combine(M*X,Y)
+%       out = transform(X,Y,[])       <= out = memorySum(X,Y)
+%       out = transform(X,Y,M)     <= out = memorySum(M*X,Y)
 %   Inputs:
 %       X       - memZono in R^n
 %       b or Y  - vector in R^m or memZono in R^m
@@ -22,7 +22,7 @@
 %   Outputs:
 %       Z - memZono in R^m
 %           Affine transformation M*X+b is applied to the inDims dimensions
-%           If Y memZono is specified, then combine(M*X,Y) is returned
+%           If Y memZono is specified, then memorySum(M*X,Y) is returned
 %   Notes:
 %       
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -67,8 +67,6 @@ function obj = transform(obj1,obj2,M, inDims, outDims, options)
         else % Case 1: no multiplication, so dimensions do not change with only the sum
             outDims = inDims;
         end
-    % TODO - need to check that if outDims is specified, outDims are all valid labels?
-    % (to: @jruths) - this check is dependent on the size of M thus I believe check is done already in other checks (from: @jonaswagner2826)
     end
 
     % inDims should match the input dimension of the linear map M, if it exists
@@ -93,7 +91,7 @@ function obj = transform(obj1,obj2,M, inDims, outDims, options)
 
     %% Operation Logic
     if isa(obj2,'memZono') % <-- thus minkowski sum
-        obj = combine(affineMap(obj1,[],M,inDims,outDims,options),obj2); % <-- M Z \oplus Y
+        obj = memorySum(affineMap(obj1,[],M,inDims,outDims,options),obj2); % <-- M Z \oplus Y
     else % <-- thus a vector sum
         obj = affineMap(obj1,obj2,M,inDims,outDims,options); % <-- M Z + b
     end
@@ -127,17 +125,17 @@ function out = affineMap(in,b,M,inDims,outDims,options)
     end
 
     G_ = [ 
-        in.G(pass_idx,:); 
-        M*in.G(M_idx,:)
+        in.G_(pass_idx,:); 
+        M*in.G_(M_idx,:)
     ];
     c_ = [
-        in.c(pass_idx,:);
-        M*in.c(M_idx,:) + b
+        in.c_(pass_idx,:);
+        M*in.c_(M_idx,:) + b
     ];
     % only need to update the dimKeys - reordered and the mapped ones are relabeled
-    keys_ = in.keys;
+    keys_ = in.keys_;
     keys_.dims = [passDims,outDims];
     
-    % constraints, constraint keys, factor keys, and vset do not change
-    out = memZono(G_, c_, in.A, in.b, in.vset, keys_);
+    % constraints, constraint keys, factor keys, and vset_ do not change
+    out = memZono(G_, c_, in.A_, in.b_, in.vset_, keys_);
 end
