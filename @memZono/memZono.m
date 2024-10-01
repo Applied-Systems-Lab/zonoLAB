@@ -203,7 +203,7 @@ classdef memZono
         out = linMap(in,M,inDims,outDims);
         out = funMap(obj1,obj2,inDims,outDims,lbl,funInDims,funOutDims);
         % Plotting -------------------------
-        plot(obj, dims, varargin);
+        varargout = plot(obj, dims, varargin);
         % Projection & Export ------------------
         out = projection(obj,dims); % projection according to dims
         function out = Z(obj,dims), out = projection(obj,dims).Z_; end

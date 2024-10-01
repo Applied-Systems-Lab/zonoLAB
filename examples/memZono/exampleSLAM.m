@@ -172,8 +172,8 @@ rng(5); %<== reset random number generator
 
 
 %  Simulation Settings
-N = 6;         % number of time steps (starting at 1)
-n_L = 30;     % number of Lnom
+N = 4;         % number of time steps (starting at 1)
+n_L = 20;     % number of Lnom (must be even)
 % theta = pi/6;   % rad between each measurement
 % theta = 0.4*pi;
 
@@ -185,14 +185,15 @@ C = eye(2); % Measurement
 n = size(A,1); m = size(B,2); p = size(C,1);
 
 % Noise
-eta_0 = 0.05;
+eta_0 = 1e-1;
 V0 = zono(eta_0*eye(n),zeros(n,1));
-nu_0 = 5e0*[0.075, 0.05];
+nu_0 = 1e-1.*[5,1];
+% 5e0*[0.075, 0.05];
 H0 = zono(diag(nu_0),zeros(p,1));
 
 % Initial Conditons
 x0 = [0;0]; % initial state
-X0 = zono(1e-2*eye(n),x0); % initial state set
+X0 = x0 + V0; % initial state set
 
 % Landmarks
 L{N,n_L} = [];
@@ -201,11 +202,23 @@ r_detection = 3;
 %     theta = 2*pi*rand();
 %     Lnom{i} = (2+2*rand())*[cos(theta);sin(theta)];
 % end
-lb = [-1;-2]; ub = [15;2];
+lb = [-1;-2]; ub = [5;2];
 % Lmeas_0 = H_0;%zono(diag(eta_0),zeros(p,1));
+% for i = 1:n_L
+%     Lnom{i} = ((ub-lb).*rand(n,1)+lb); %<== random location
+%     % while abs(Lnom{i}(2)) <= ub(2)./4
+%     %     % Lnom{i} = Lnom{i}.*4;
+%     %     Lnom{i} = ((ub-lb).*rand(n,1)+lb); %<== random location
+%     % end
+% end
+
+Lx = linspace(lb(1),ub(1),n_L/2);
+% Ly = linspace(lb(2),ub(2),n_L);
+Lbase = [[Lx,Lx];[lb(2).*ones(1,n_L/2)/2, ub(2).*ones(1,n_L/2)/2]];
 for i = 1:n_L
-    Lnom{i} = ((ub-lb).*rand(n,1)+lb); %<== random location
+    Lnom{i} = Lbase(:,i) + (2*rand(n,1)-1).*[0;1]; %<= normal about the places...
 end
+
 
 % Labeling
 xDim = @(k) memZono.genKeys(sprintf('x_%dk',k),1:n);
@@ -225,12 +238,12 @@ for k=1:N %(evolve past N to get measurements)%
     for i = 1:n_L
         r = Lnom{i} - x(:,k);
         if norm(r) <= r_detection
-            theta = atan2(r(2),r(1));
-            RH = rotate_zonotope(H0,theta); % Rotate measuremet
-            r_m{k,i} = r + random_sample_zonotope(RH); % <==noisy measurment realization
+            theta{k,i} = atan2(r(2),r(1));
+            RH{k,i} = rotate_zonotope(H0,theta{k,i}); % Rotate measuremet
+            r_m{k,i} = r + random_sample_zonotope(RH{k,i}); % <==noisy measurment realization
             % Predict based on measurements
-            L{k,i} = relabelDims(X{k},xDim(k),lDim(i)) ... %<= relative to state position
-                + memZono(RH+r_m{k,i},lDim(i),lKey(k,i)); %<= measured distance (r_m) + rotated error measurement (RH)
+            L{k,i} = relabelDims(Xall,xDim(k),lDim(i)) ... %<= relative to state position
+                + memZono(RH{k,i}+r_m{k,i},lDim(i),lKey(k,i)); %<= measured distance (r_m) + rotated error measurement (RH)
             % Include landmark
             Xall = Xall.and(L{k,i}, lCon(k,i));
         end
@@ -262,9 +275,8 @@ for k = 1:N
     end
     for i = 1:k-1
         copyobj([p_X_{i,:}],ax{k});
-        copyobj([p_x_{i}],ax{k});
-        copyobj([p_L_{i,:}],ax{k});
-        % copyobj([p_l_{i,:}],ax{k});
+        copyobj([p_Lest_{i,:}],ax{k});
+        copyobj([p_Lmeas_{i,:}],ax{k});
     end
     % if k>1
     %     p_Xnom_old = copyobj(flipud([p_Xnom_{:}]),ax{k});
@@ -278,9 +290,14 @@ for k = 1:N
     %     % % set([p_Xnom_old;p_x_old;p_L_old;p_l_old],'HandleVisibility','off');
     %     % copyobj(ax{k-1}.Children,ax{k});
     % end
-    title(sprintf('$k = %i$',k-1),'interpreter','Latex');
+    
+    % axes setup
+    % title(sprintf('$k = %i$',k-1),'interpreter','Latex');
     xlabel('x');
     ylabel('y');
+    legend();
+    yline(0,'--','HandleVisibility','off');
+    grid on;
     
     % Loop Landmarks
     for i = 1:n_L
@@ -288,11 +305,31 @@ for k = 1:N
         k_last = find(~cellfun(@isempty,L(1:k,i)),1,"last");
         if ~isempty(k_last)
             % plot(Xall_{k},lDim(i),'r',0.6);    % plot landmark zonotope
-            if k_first == k; w = 1; elseif k_last == k; 0.7; else; w = 0.5; end
-            plot(Xall_{k_last},lDim(i),clr(k,:),w);    % plot landmark zonotope
-            p_L_{k,i} = ax{k}.Children(1);
-            p_L_{k,i}.HandleVisibility='off';
-            p_l_{k,i} = scatter(Lnom{i}(1),Lnom{i}(2),'bx',HandleVisibility='off'); % plot Lnom accurate location
+
+            %% Plot landmark measurements
+            if k_last == k
+                [p_Lmeas_{k,i},P_lmeas_{k,i}] = plotZonoAndCentroid(L{k,i},lDim(i),clr(k,:),0,'.');
+                % [v,f] = plot(L{k,i},lDim(i),clr(k,:),0);
+                % p_Lmeas_{k,i} = ax{k}.Children(1);
+                % p_Lmeas_{k,i}.HandleVisibility = 'off';
+                % p_Lmeas_{k,i}.EdgeColor=clr(k,:);
+            end
+            %% plot landmark estimate
+            % if k_first == k; w = 1; elseif k_last == k; w = 0.7; else; w = 0.5; end
+            [p_Lest_{k,i},p_lest_{k,i}] = plotZonoAndCentroid(Xall_{k},lDim(i),clr(k,:),0.5,'+');
+            p_Lest_{k,i}.EdgeColor='k';
+            if k_first == k
+                p_Lest_{k,i}.FaceAlpha = 1;
+            elseif k_last == k
+                p_Lest_{k,i}.FaceAlpha = 0.7;
+            end
+            % plot(Xall_{k},lDim(i),clr(k,:),w);    % plot landmark zonotope
+            % p_Lest_{k,i} = ax{k}.Children(1);
+            % p_Lest_{k,i}.HandleVisibility='off';
+            % p_lest_{k,i} = plot(Xall_{k}.Z(lDim(i)).c(1),Xall_{k}.Z(lDim(i)).c(2),'+',MarkerEdgeColor=clr(k,:),MarkerSize=12,HandleVisibility='off'); % plot L center
+            % plot landmark measurements
+            % plot actual
+            p_lnom_{k,i} = plot(Lnom{i}(1),Lnom{i}(2),'kx',HandleVisibility='off'); % plot Lnom accurate location
             drawnow;
         end
 
@@ -310,23 +347,38 @@ for k = 1:N
     end
 
     % Plot State Zonotopes
-    plot(X{k},xDim(k),'k',0.3);
-    p_Xnom_{k} = ax{k}.Children(1);
-    p_Xnom_{k}.HandleVisibility='off';
+    % Nominal (plots only new nominal)
+    [p_Xnom_{k},p_xnom_{k}] = plotZonoAndCentroid(X{k},xDim(k),'k',0.3,'x');
+    % plot(X{k},xDim(k),'k',0.3);
+    % p_Xnom_{k} = ax{k}.Children(1);
+    % p_Xnom_{k}.HandleVisibility='off';
 
-    for i = 1:k-1
-        % p_x_{k} = plot(x(1,i),x(2,i),'k','MarkerSize',12,HandleVisibility='off');
-        plot(Xall_{k},xDim(i),clr(k,:),0.3);
-        p_X_{k,i} = ax{k}.Children(1);
-        p_X_{k,i}.HandleVisibility = 'off';
+    for j = 1:k
+        [p_X_{k,j},p_x_{k,j}] = plotZonoAndCentroid(Xall_{k},xDim(j),clr(k,:),0.3,'+');
+        % p_x_{k} = plot(x(1,i),x(2,i),'kx','MarkerSize',12,HandleVisibility='off');
+        % plot(Xall_{k},xDim(i),clr(k,:),0.3);
+        % p_X_{k,i} = ax{k}.Children(1);
+        % p_X_{k,i}.HandleVisibility = 'off';
+        p_X_{k,j}.EdgeColor = 'k';
+        if j == k
+            p_X_{k,j}.FaceAlpha = 0.9;
+            p_X_{k,j}.LineWidth = 0.5;
+            p_X_{k,j}.DisplayName = sprintf('$k=%d$',k);
+            p_X_{k,j}.HandleVisibility = 'on';
+        end
     end
-    i = k;
-    p_x_{k} = plot(x(1,i),x(2,i),'k','MarkerSize',12,HandleVisibility='off');
-    plot(Xall_{k},xDim(i),clr(k,:),1);
-    p_X_{k,i} = ax{k}.Children(1);
-    p_X_{k,k}.DisplayName = sprintf('$k=%d$',k);
-    legend();
+    % i = k;
+    % [p_X_{k},p_x_{k,i}] = plotZonoAndCentroid(Xall_{k},xDim(i),clr(k,:),1,'.');
+    % plot(Xall_{k},xDim(i),clr(k,:),1);
+    % p_X_{k,i} = ax{k}.Children(1);
+    % p_X_{k,k}.DisplayName = sprintf('$k=%d$',k);
+    % p_x_{k} = plot(x(1,i),x(2,i),'kx','MarkerSize',12,HandleVisibility='off');
 
+    % Put past postion markers on top
+    for i = 1:k-1
+        copyobj([p_x_{i}],ax{k});       
+        % copyobj([p_lest_{i,:}],ax{k});
+    end
 end
 fig2 = figure; t2 = tiledlayout('flow');
 copyobj(ax{end},t2);
@@ -371,4 +423,18 @@ end
 function s = random_sample_zonotope(z)
     g = 2*rand([z.nG,1])-1;
     s = z.c + z.G*g;
+end
+
+
+
+function [P,p] = plotZonoAndCentroid(Zm,dim,clr,w,mkr,varargin)
+    [v,~] = plot(Zm,dim,clr,w);
+    ax = gca; P = ax.Children(1);
+    P.HandleVisibility='off';
+    if w >= 0.5, P.EdgeColor='k'; else, P.EdgeColor=clr; end;
+    P.EdgeAlpha=1;
+    [x,y] = centroid(polyshape(v));
+    p = plot(x,y,mkr,...
+        "MarkerEdgeColor",clr,...
+        "HandleVisibility","off",varargin{:});
 end
