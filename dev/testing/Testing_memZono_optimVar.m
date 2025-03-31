@@ -17,7 +17,7 @@ X = memZono(X,'x');
 %% Propogation
 xLabel = @(k) sprintf('x_%d',k);
 A = [1,2;3,4]; b = ones(n,1); N = 5;
-X_{1} = memZono(X.Z,'x_1');
+X_{1} = memZono(X,'x_1');
 for k = 2:N
     X_{k} = X_{k-1}.linMap(A,xLabel(k)) + memZono(b,xLabel(k));
 end
