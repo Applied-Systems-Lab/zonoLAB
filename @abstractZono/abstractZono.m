@@ -72,7 +72,7 @@ classdef (Abstract) abstractZono < DisplayNonScalarObjectAsTable
             out = bb.c - sum(abs(bb.G),2);
         end
         function [lb,ub] = bounds(obj)
-            bb = obj.boundingBox;
+            bb = obj.boundingBox();
             ub = bb.c + sum(abs(bb.G),2);
             lb = bb.c - sum(abs(bb.G),2);
         end

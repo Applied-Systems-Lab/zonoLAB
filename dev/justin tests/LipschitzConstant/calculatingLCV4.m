@@ -6,30 +6,30 @@
 clear; close all;
 clc;
 
-%% Loading last saved data
-fromScratch = true;
-
 %% Loading Data
 % Loads pretrained data for 2d and 3d cases
-load("S.mat")
-rng(S)
+% load("S.mat")
+% rng(S)
 
-% example = 'hyperp';     % 4d  f = 4*X1 + 2*X2 + 5*X3
-example = 'sincos';     % 3d  f = cos(X1) + sin(X2)
-% example = 'linear';     % 2d    f = 3*X1
-
-if(example == 'hyperp')
-    load('hyperplane_4_4_4.mat',"NN")
-elseif(example == 'sincos')
-    load('sincos_20_10_10.mat',"NN")
-else
-    load('linear_4_5_4.mat',"NN")
-end
+%% Load Neural Net
+% % example = 'hyperp';     % 4d  f = 4*X1 + 2*X2 + 5*X3
+% example = 'sincos';     % 3d  f = cos(X1) + sin(X2)
+% % example = 'linear';     % 2d    f = 3*X1
+% 
+% if(example == 'hyperp')
+%     load('hyperplane_4_4_4.mat',"NN")
+% elseif(example == 'sincos')
+%     load('sincos_20_10_10.mat',"NN")
+% else
+%     load('linear_4_5_4.mat',"NN")
+% end
+% load('NEWsincos2X_20_10_10.mat',"NN")
+load('NEWsincos_20_10_10.mat',"NN")
 
 % Current zonoLab version does not have the resolved file, to get around
 % optSolver error add in empty '{}'
 tempZono = NN.Z;
-leaves = tempZono.getLeaves({});
+leaves = round(tempZono.getLeaves({}));%tempZono.getLeaves({});%
 
 [ngb, num_leaves] = size(leaves);
 
@@ -38,11 +38,18 @@ optPlot = plotOptions('Display','off','SolverOpts',{});
 
 % Variable L will contain the largest slope for each facet
 L = zeros(num_leaves,3);
+count = 0;
 
 tol = 1e-7;
 for leaf = 1 : num_leaves
     Zi{leaf,1} = conZono(tempZono.Gc,tempZono.c+tempZono.Gb*leaves(:,leaf),tempZono.Ac,tempZono.b-tempZono.Ab*leaves(:,leaf));
-    [vertices] = findVF(Zi{leaf},tol,optPlot.SolverOpts);
+
+    try
+        [vertices] = findVF(Zi{leaf},tol,optPlot.SolverOpts);
+    catch
+        count = count + 1;
+        continue
+    end
     
     % Possibly not needed.
     vertices = uniquetol(vertices, tol,"ByRows",true);
@@ -54,6 +61,7 @@ for leaf = 1 : num_leaves
     elseif (leafRank == 1)
         fprintf('This is a point.\n');
         L(leaf,2) = 1;
+        pause(5)
     elseif (leafRank == 2)
         % Finds the slope for the a plane using the normal vector
         vectorOne = vertices(1,:)-vertices(2,:);
@@ -64,6 +72,7 @@ for leaf = 1 : num_leaves
         
         fprintf('This is a line. Slope = %1.4f\n', L(leaf,1));
         L(leaf,2) = 2;
+        pause(5)
     else
         % Caclulating the vectors based on the found vertices
         for i = 2: leafRank
@@ -101,5 +110,16 @@ for i  = 1: length(outliers)
         bigL = [bigL, L(i)];
     end
 end
-maxAll = max(maxL)
-averageL = mean(maxL)
+
+%% Finding the largest L disregarding outliers and also the outliers
+avgL = mean(L);
+
+worstL = max(L(:,1));
+
+
+fprintf('\n==========================================================\n');
+
+fprintf('The Average Lipschitz Constant is: %1.1f\n', avgL(1));
+
+
+fprintf('The Largest Lipschitz Constant is: %1.1f\n', worstL);

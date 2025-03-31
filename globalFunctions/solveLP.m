@@ -47,7 +47,7 @@ switch optSolver.lpSolver
         model.modelsense = 'max';
         params.Threads = 1;
         params.outputflag = 0;
-%         params.FeasibilityTol = 1e-9;
+        params.FeasibilityTol = 1e-9;
         result = gurobi(model,params);
         exitFlag = result.status;
         x = NaN;

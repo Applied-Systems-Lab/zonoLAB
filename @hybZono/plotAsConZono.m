@@ -38,9 +38,6 @@ waitbarHandle = waitbar(0,['Plotting hybrid zonotope with ',num2str(nLeaves),' l
 %  Z = { (c + Gb \xib) + Gc \xic | ||\xic||_inf <= 1, Ac \xi = b - Ab \xib }
 emptyLeaves = false;
 for i = 1:nLeaves
-%     if (i == 1 || i == 206 || i == 582 || i == 703 || i == 762 || i == 771) 
-%         warning('leaf: %d',i)
-%     end
     Zi = conZono(obj.Gc,obj.c+obj.Gb*leaves(:,i),obj.Ac,obj.b-obj.Ab*leaves(:,i));
     [vi,fi] = plot(Zi,optPlot);
     if size(vi,1) == 0

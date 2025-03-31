@@ -6,28 +6,30 @@ clear all; close all; clc;
 
 % True trains the NN based on criterion below
 % False load a NN trained on one of the two loaded examples
-fromScratch = false;
+fromScratch = true;
 
 % Select Sample Functions
-% example = 'sincos'; % f = @(X1, X2) cos(X1)+sin(X2);
-example = 'linear'; % f = @(X1, X2) 3*X1;
+example = 'PaperSinCos'; % f = @(X1, X2) cos(X1)+sin(X2);
+% example = 'linear'; % f = @(X1, X2) 3*X1;
 
 % Define function you would like to train
-if (example == 'sincos')
+% if (example == 'Papersincos')
     f = @(X1, X2) cos(X1)+sin(X2);
     h_layers = [20,10,10];      % Defining layers for NN
-else
-    f = @(X1, X2) 3*X1;
-    h_layers = [4,5,4];         % Defining layers for NN
-end
+% else
+    % f = @(X1, X2) 3*X1+2*X2;
+    % h_layers = [4,5,4];         % Defining layers for NN
+% end
 
 if(fromScratch)
     % Training Size
-    N = 100; % Larger N typically means longer training time
+    N = 200; % Larger N typically means longer training time
     
     % Training Paramters
-    x1_train = linspace(-5,5,N);
-    x2_train = linspace(-5,5,N);
+    x1_train = linspace(-pi,pi,N);
+    x2_train = linspace(-pi,pi,N);
+    % x1_train = [linspace(-pi,0,N/2) linspace(0,pi,N)];
+    % x2_train = [linspace(-pi,0,N/4) linspace(0,pi,N/2)];
     
     [X1_train, X2_train] = meshgrid(x1_train,x2_train);
     [n, m] = size(X1_train);
@@ -46,7 +48,7 @@ if(fromScratch)
     
     
     %% Network Training
-    output_train = reshape(Y_train,n*m,1); % reshape output data  
+    output_train = reshape(Y_train,n*m,1); % reshape output data
     
     % Within Training Options, between 0 and 1
     % Value determins how much influence the previous term has for the new
@@ -54,7 +56,7 @@ if(fromScratch)
     
     % At 0.95, NN will fail to build the linear function
     % Significance of the value?
-    momentum = 0.85; 
+    momentum = 0.95; 
     
     % setting up the actual network
     % variable definition to create varied layers for NN training
@@ -68,7 +70,6 @@ if(fromScratch)
     layers = [ layers 
                fullyConnectedLayer(1)
                regressionLayer];
-    
          
     options = trainingOptions("sgdm",'Momentum', momentum, MaxEpochs = 200,Plots='training-progress');
     net = trainNetwork(input_train, output_train, layers, options);
@@ -159,3 +160,4 @@ grid on;
 title('Hybrid Zonotope')
 toc
 
+save(append(name, ".mat"))
