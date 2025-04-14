@@ -456,23 +456,19 @@ classdef memZono
         end
 
         % test if special
+        function out = isempty(obj)
+            out = all([isempty(obj.G_),isempty(obj.c_),...
+                isempty(obj.A_),isemtpy(obj.b_)]);
+        end
         function out = issym(obj)
             % tests if any are symbolic
-            if any([isa(obj.G_,'sym'),isa(obj.c_,'sym'),...
-                    isa(obj.A_,'sym'),isa(obj.b_,'sym')])
-                out = true;
-            else
-                out = false;
-            end
+            out = any([isa(obj.G_,'sym'),isa(obj.c_,'sym'),...
+                    isa(obj.A_,'sym'),isa(obj.b_,'sym')]);
         end
         function out = isnumeric(obj)
             % tests if all are numeric
-            if all([isnumeric(obj.G_), isnumeric(obj.c_), ...
-                    isnumeric(obj.A_), isnumeric(obj.b_)])
-                out = true;
-            else
-                out = false;
-            end
+            out = all([isnumeric(obj.G_), isnumeric(obj.c_), ...
+                    isnumeric(obj.A_), isnumeric(obj.b_)]);
         end
     end
     methods (Static)
