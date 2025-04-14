@@ -105,6 +105,15 @@ function out = affineMap(in,b,M,inDims,outDims,options)
     if isempty(b)
         b = zeros(length(outDims),1);
     end
+    if issparse(M)
+        if ~isnumeric(in)
+            error('Sparse matrix multiplication is not supported for non-numeric memZono objects.')
+        end
+        in.G_ = sparse(in.G_);
+        in.c_ = sparse(in.c_);
+        in.A_ = sparse(in.A_);
+        in.b_ = sparse(in.b_);
+    end
     
     % select the dimensions to be mapped by grabbing indices
     % use ismember so that the order of inDims is preserved to match M and b
