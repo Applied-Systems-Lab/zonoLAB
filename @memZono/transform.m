@@ -105,7 +105,7 @@ function out = affineMap(in,b,M,inDims,outDims,options)
     if isempty(b)
         b = zeros(length(outDims),1);
     end
-    if issparse(M)
+    if any([issparse(M),issparse(b)])
         if ~isnumeric(in)
             error('Sparse matrix multiplication is not supported for non-numeric memZono objects.')
         end
