@@ -11,6 +11,25 @@ m7l = XTestLabels(1);
 m1 = reshape(XTest(:,:,1,2),[28 28]);
 m1l = XTestLabels(2);
 
+%% Setting up test data point
+% Defined as the average of all ones data points
+weights = net1.Layers(2,1).Weights;
+bias = net1.Layers(2,1).Bias;
+
+% Collects all ones from data set puts it into a 3D matrix (28-28-xxxx)
+ones_data = cat(3,XTest(:,:,XTestLabels==1), XTrain(:,:,XTrainLabels==1), XValidation(:,:,XValidLabels==1));
+
+% Takes the average which will become the center point
+avg_ones_data = reshape(mean(ones_data,3),[28 28]);
+
+% Transforms data point to account for padding to perform full convolution
+z = zeros(size(ones_data,1)+2*(size(weights,1)-1),size(ones_data,2)+2*(size(weights,2)-1),size(ones_data,3));
+z(size(weights,1):size(ones_data,1)+size(weights,1)-1,size(weights,2):size(ones_data,2)+size(weights,2)-1,:) = ones_data;
+ones_data = z;
+
+% Reshapes data points into column of 784-xxxx
+ones_data = reshape(ones_data,[size(ones_data,1)*size(ones_data,2) size(ones_data,3)]);
+
 %% Step by step calculation through NN
 newNet = dlnetwork;
 layerProjection = [];
@@ -19,14 +38,14 @@ layers = [
     imageInputLayer([28 28 1],Mean = net1.Layers(1).Mean)]
 newNet = addLayers(newNet,layers);
 newNet = initialize(newNet)
-newNet.predict(m7)
+newNet.predict(avg_ones_data)
 
 for i = 1: length(net1.Layers)-1
     layers = net1.Layers(i+1)
     newNet = addLayers(newNet,layers)
     newNet = connectLayers(newNet, newNet.Layers(i).Name, newNet.Layers(i+1).Name)
     newNet = initialize(newNet)
-    layerProjection{i} = newNet.predict(m7)
+    layerProjection{i} = newNet.predict(avg_ones_data)
     plot(newNet)
 end
 
@@ -40,7 +59,7 @@ figure
 imshow(m1)
 start=1;
 % for j = 1:2163
-    testPoint = reshape(XTest(:,:,1,start),[28 28])-net1.Layers(1).Mean;
+    testPoint = avg_ones_data-net1.Layers(1).Mean;
     %% For the 7
     weights = net1.Layers(2,1).Weights;
     bias = net1.Layers(2,1).Bias;
@@ -175,7 +194,7 @@ start=1;
     bias = net1.Layers(10,1).Bias;
     
     % linear mapping
-    lastLayer(start) = weights*activeRelu3 + bias;
+    lastLayer(start) = weights*activeRelu3 + bias
 % end
 
 %% Similarity Test

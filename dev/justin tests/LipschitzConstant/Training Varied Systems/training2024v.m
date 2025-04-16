@@ -7,7 +7,7 @@ clc;
 
 % True trains the NN based on criterion below
 % False load a NN trained on one of the two loaded examples
-fromScratch = false;
+fromScratch = true;
 
 %% Create Training & Testing Data
 example = 'MIMO';

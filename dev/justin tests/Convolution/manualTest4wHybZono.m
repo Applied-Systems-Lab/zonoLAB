@@ -12,41 +12,32 @@ m1 = reshape(XTest(:,:,1,2),[28 28]);
 m1l = XTestLabels(2);
 
 %% Step by step calculation through NN
-newNet = dlnetwork;
-layerProjection = [];
-
-layers = [
-    imageInputLayer([28 28 1],Mean = net1.Layers(1).Mean)]
-newNet = addLayers(newNet,layers);
-newNet = initialize(newNet)
-newNet.predict(m7)
-
-for i = 1: length(net1.Layers)-1
-    layers = net1.Layers(i+1)
-    newNet = addLayers(newNet,layers)
-    newNet = connectLayers(newNet, newNet.Layers(i).Name, newNet.Layers(i+1).Name)
-    newNet = initialize(newNet)
-    layerProjection{i} = newNet.predict(m7)
-    plot(newNet)
-end
-
-m7 = reshape(XTest(:,:,1,1),[28 28])-net1.Layers(1).Mean;
-m1 = reshape(XTest(:,:,1,2),[28 28])-net1.Layers(1).Mean; %
+% newNet = dlnetwork;
+% layerProjection = [];
+% 
+% layers = [
+%     imageInputLayer([28 28 1],Mean = net1.Layers(1).Mean)]
+% newNet = addLayers(newNet,layers);
+% newNet = initialize(newNet)
+% newNet.predict(m7)
+% 
+% for i = 1: length(net1.Layers)-1
+%     layers = net1.Layers(i+1)
+%     newNet = addLayers(newNet,layers)
+%     newNet = connectLayers(newNet, newNet.Layers(i).Name, newNet.Layers(i+1).Name)
+%     newNet = initialize(newNet)
+%     layerProjection{i} = newNet.predict(m7)
+%     % plot(newNet)
+% end
+% 
+% m7 = reshape(XTest(:,:,1,1),[28 28])-net1.Layers(1).Mean;
+% m1 = reshape(XTest(:,:,1,2),[28 28])-net1.Layers(1).Mean; %
 
 %%
-figure
-imshow(m7)
-figure
-imshow(m1)
-
-%% Plot sample sigma
-figure()
-subplot(2,1,1)
-imshow(plot_image_versions(X1sigma,5))
-subplot(2,1,2)
-imshow(plot_image_versions(X7sigma,5))
-xlabel('σ')
-ylabel('ξ=1, ξ=-1, ξ∈\{-1,1\}^{784}')
+% figure
+% imshow(m7)
+% figure
+% imshow(m1)
 
 %% Propagating through the network step by step
 start=1;
@@ -79,74 +70,113 @@ start=1;
         X1sigma{i} = interval_hull_of_points(ones_data, sigma);
         X7sigma{i} = interval_hull_of_points(sevens_data, sigma);
     end
+
+    %% Plot sample sigma
+    figure()
+    subplot(2,1,1)
+    imshow(plot_image_versions(X1sigma,5))
+    subplot(2,1,2)
+    imshow(plot_image_versions(X7sigma,5))
+    xlabel('σ')
+    ylabel('ξ=1, ξ=-1, ξ∈\{-1,1\}^{784}')
+
     % figure
     % hold on
     
-    % The convolution operations, 'same' and 'valid' are subset processes
-    % of the full convolution. Applying full convolution and then
-    % partitioning the proper section of the matricies will allow for
-    % calculation of convolution methods other than full.
-    % 'same' : the subset is specifically,
-    % (size of convolution)/2  + 1 for starting location
-    % then the size of the resulting conv is the size of A.
-
-    % 'valid': the subset is specifically,
-    % size of convolution for starting location
-    % size of resulting conv is 
-    %       (length of input - length of conv + 1)
-    %       (width of input - width of conv + 1)
-
-        
     convLength = size(weights(:,:,1,i),2);
     convHeight = size(weights(:,:,1,i),1);
+    %% Old manual Calculation
     Empty = zeros(size(testPoint,1)+2*(convHeight-1),size(testPoint,2)+2*(convLength-1));
-    Ashape = Empty;
-    Ashape(convHeight:size(Ashape,1)-convHeight+1,convLength:size(Ashape,2)-convLength+1) = testPoint;
-    Ashape = reshape(Ashape',[size(Ashape,1)*size(Ashape,2) 1]);
+    % Ashape = Empty;
+    % Ashape(convHeight:size(Ashape,1)-convHeight+1,convLength:size(Ashape,2)-convLength+1) = testPoint;
+    % Ashape = reshape(Ashape',[size(Ashape,1)*size(Ashape,2) 1]);
 
-    for i = 1: length(weights)
-        k = 1;
-        for updown = 1: size(Empty,1)-convHeight+1
-            for leftright = 1: size(Empty,2)-convLength+1
-                temp = Empty;
-                temp(updown:updown+(convHeight-1),leftright:leftright+(convLength-1))= rot90(weights(:,:,1,i),2);
-    
-                convShape(k,:) = reshape(temp',[size(temp,1)*size(temp,2) 1]);
-                k = k + 1;
+    stackedConvWeights = [];
+    stackedConvBias = [];
+    %% Calculating using hybzono
+        for i = 1: length(weights)
+            k = 1;
+            for updown = 1: size(Empty,1)-convHeight+1
+                for leftright = 1: size(Empty,2)-convLength+1
+                    temp = Empty;
+                    temp(updown:updown+(convHeight-1),leftright:leftright+(convLength-1))= rot90(weights(:,:,1,i),2);
+        
+                    convShape(k,:) = reshape(temp',[size(temp,1)*size(temp,2) 1]);
+                    k = k + 1;
+                end
             end
+            stackedConvWeights  = [stackedConvWeights; rot90(convShape,2)];
+            stackedConvBias     = [stackedConvBias; bias(:,:,i)*ones(1024,1)];
         end
 
-        % convOut = convShape*Ashape+bias(:,:,i);
-                % convTemporary = convShape;
-                % convTemporary(:,1:4*36)=NaN;
-                % convTemporary(:,33*36+1:36*36)=NaN;
-                % convTemporary(:,[(4:33)*36.+(1:4)'])=NaN;
-                % convTemporary(:,[(4:33)*36.+(33:36)'])=NaN;
-                % convTemporary(find(isnan(convTemporary)==1))=[];
-                % convTemporary = reshape(convTemporary,[],784)';
-        % Full convolution
-        convSquare = reshape(rot90(convShape,2)*Ashape+bias(:,:,i),[size(testPoint,2)+convLength-1 size(testPoint,1)+convHeight-1])';
+%%
+        outKeys = [];
+        for i = 1: length(weights)
+            % Create unique keys per conv layer
+            outKeys = [outKeys; genMatIndexKeys(sprintf('C_%d',i),1,1,size(testPoint,1)+convHeight-1,size(testPoint,2)+convLength-1)'];
+        end
 
-        % Same Convolution partitioning:
+            %%
+            % Full convolution calculation, output of conv layer
+            % Must iterate through all sigma (21) and all weights (200)
+            % convSquare{i} = X1sigma{sigIterate}.transform(bias(:,:,i)*ones(1024,1),rot90(convShape,2),memZono.genKeys('Z',1:1296),outKeys);
+            
+            % Use projection to obtain subset of conv
+            % The convolution operations, 'same' and 'valid' are subset processes
+            % of the full convolution. Applying full convolution and then
+            % partitioning the proper section of the matricies will allow for
+            % calculation of convolution methods other than full.
+            % 'same' : the subset is specifically,
+            % (size of convolution)/2  + 1 for starting location
+            % then the size of the resulting conv is the size of A.
+        
+            % 'valid': the subset is specifically,
+            % size of convolution for starting location
+            % size of resulting conv is 
+            %       (length of input - length of conv + 1)
+            %       (width of input - width of conv + 1)
+
+            
+            % Use plus to merge subset
+
+
+            % convSquare = reshape(rot90(convShape,2)*Ashape+bias(:,:,i),[size(testPoint,2)+convLength-1 size(testPoint,1)+convHeight-1])';
+
+            %%
+            % If values look weird, stackedConvWeights might be generated
+            % incorrectly
+            for sigIterate = 1: size(X1sigma,1) % change size to 2 for all
+                X1conv1{sigIterate} = X1sigma{sigIterate}.transform(stackedConvBias,stackedConvWeights,memZono.genKeys('Z',1:1296),outKeys);
+            end
+
+%% Same Convolution partitioning:
+%% Finds the partitions for a projection relative to a subset of the overall data
+        snipKeys = [];
         startH = floor(convHeight/2) + 1;
         startL = floor(convLength/2) + 1;
 
-        % Taking subset of the region
-        forward{i} = convSquare(startH:startH+size(testPoint,1)-1,startL:startL+size(testPoint,2)-1);
+        for i = 1: length(weights)
+            % Create unique keys per conv layer
+            snipKeys = [snipKeys; genMatIndexKeys(sprintf('C_%d',i),startH,startL, startH+size(testPoint,1)-1,startL+size(testPoint,2)-1)'];
+        end
+
+%% Takes the projection relative to the snip keys
         
-        % Regular method of convolution.
-        % forward{i} = conv2(testPoint,rot90(weights(:,:,1,i),2),'same')+bias(i);
-    end
-    
+            % Taking subset of the region
+            % forward{i} = convSquare(startH:startH+size(testPoint,1)-1,startL:startL+size(testPoint,2)-1);
+            
+            % Regular method of convolution.
+            % forward{i} = conv2(testPoint,rot90(weights(:,:,1,i),2),'same')+bias(i);
     % Reshaping Input
-    x=[];
-    for i = 1:length(net1.Layers(2).Weights)
-        x = [x ;reshape(forward{i},[1 size(forward{i},1)*size(forward{i},2)])];
-    end
+                                                                            % some reason snipKeys need to be transposed cause dim keys are row
+                                                                            % vector.
+    x = X1conv1{1,1}(snipKeys',:,:);
+    % for i = 1:length(net1.Layers(2).Weights)
+    %     x = [x ;reshape(forward{i},[1 size(forward{i},1)*size(forward{i},2)])];
+    % end
 
-    X1sigma{1}.transform(bias(:,:,1),rot90(convShape,2),memZono.genKeys('Z',1:1296),memZono.genKeys('C',1:1024))
-
-    %% Average Pooling Layer
+%% Average Pooling Layer
+%% Creating pooling layer as one matrix
     poolLength = net1.Layers(3).PoolSize(1);
     poolHeight = net1.Layers(3).PoolSize(2);
     strideVert = net1.Layers(3).Stride(1);
@@ -158,18 +188,20 @@ start=1;
     k = 1;
     poolMatrix = pool*ones(net1.Layers(3).PoolSize);
 
-    for j = 1: strideVert : size(forward{1},1)
-        for i = 1: strideHorz :size(forward{1},2)
-            zeroMatrix = zeros(size(forward{i}));
+    for j = 1: strideVert : size(testPoint,1)
+        for i = 1: strideHorz :size(testPoint,2)
+            zeroMatrix = zeros(size(testPoint));
             zeroMatrix(j:j+poolHeight-1,i:i+poolLength-1) = zeroMatrix(j:j+poolHeight-1,i:i+poolLength-1)+poolMatrix;
 
-            poolingShape(k,:) = reshape(zeroMatrix',[size(forward{i},1)*size(forward{i},2) 1])';
+            poolingShape(k,:) = reshape(zeroMatrix',[size(testPoint,1)*size(testPoint,2) 1])';
             k = k + 1;
         end
     end
 
     %% Pooling Calculation
-    x = poolingShape*x';    % calcs fine
+    sparsePool = kron(sparse(eye(200)),sparse(poolingShape));
+    x = x.transform(sparse(zeros(39200,1)),sparsePool,snipKeys,memZono.genKeys('P',1:39200))
+    % x = poolingShape*x';    % calcs fine
     %%
 
     % Taking ReLU with ReLUNN 
@@ -230,11 +262,11 @@ function [Z] = interval_hull_of_points(data,threshold)
 end
 
 function [I] = plot_image_versions(Xs,N)
-    I = zeros(N*28,length(Xs)*28);
+    I = zeros(N*36,length(Xs)*36);
     for i = 1:N
-        ii = 28*(i-1)+1:28*i;
+        ii = 36*(i-1)+1:36*i;
         for j = 1:length(Xs)
-            jj = 28*(j-1)+1:28*j;
+            jj = 36*(j-1)+1:36*j;
             X = Xs{j};
             if i == 1
                 xi = ones(size(X.Gc,2),1);
@@ -243,7 +275,17 @@ function [I] = plot_image_versions(Xs,N)
             else
                 xi = 2*randi([0,1],size(X.Gc,2),1)-1;
             end
-            I(ii,jj) = reshape( X.c + X.Gc*xi , [28,28] );
+            I(ii,jj) = reshape( X.c_ + X.Gc_*xi , [36,36] );
+        end
+    end
+end
+
+%% Generates Keys with I rows and J columns
+function keys = genMatIndexKeys(key,Is, Js, I,J)
+    keys = {};
+    for j = Js:J
+        for i = Is: I
+        keys = [keys,memZono.genKeys(sprintf("%s_%d",key,i),j)];
         end
     end
 end
