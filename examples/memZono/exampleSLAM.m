@@ -194,26 +194,11 @@ xlim([-2 11])
 ylim([-5 5])
 drawnow;
 
-%%% Save Fig:
+%%% Save Fig
 saveas(fig2,'ex_SLAM.png')
-
-
-
-
-
-
-%% Plot Function
-% function plotSLAM(Xall,k,i)
-
-
-
-
-
-
-
-
-
-
+% % print to eps file:
+% print(fig2,'ex_SLAM','-depsc','-vector')
+% exportgraphics(fig2,'ex_SLAM_exportGraphics.eps', ContentType='vector')
 
 
 %% Local Functions
@@ -230,7 +215,6 @@ function s = random_sample_zonotope(z)
     g = 2*rand([z.nG,1])-1;
     s = z.c + z.G*g;
 end
-
 
 
 function [P,p] = plotZonoAndCentroid(Zm,dim,clr,w,mkr,varargin)
