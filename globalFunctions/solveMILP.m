@@ -55,6 +55,9 @@ switch optSolver.milpSolver
         if ~isempty(f)
             model.obj = f;
         end
+        if issparse(model.rhs) % rhs must be full and double for gurobi
+            model.rhs = double(full(model.rhs));
+        end
         model.lb = lb;
         model.ub = ub;
         model.vtype = vType;
