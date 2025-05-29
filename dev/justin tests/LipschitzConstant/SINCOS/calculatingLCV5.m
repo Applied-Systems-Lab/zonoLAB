@@ -28,7 +28,7 @@ clc;
 % load('NEWsincos2X_20_10_10.mat',"NN")
 % load('Papersincos2X_20_10_10.mat',"NN")
 % load('PaperDiffEpLinear2_4_5_4.mat',"NN")
-% load('Paperlinear_4_5_4.mat',"NN")
+load('Paperlinear_4_5_4.mat',"NN")
 
 %%
 % Current zonoLab version does not have the resolved file, to get around

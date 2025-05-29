@@ -28,7 +28,7 @@ load('NEWsincos_20_10_10.mat',"NN")
 
 % Current zonoLab version does not have the resolved file, to get around
 % optSolver error add in empty '{}'
-tempZono = NN.Z;
+tempZono = NN.Z(NN.keys.dims);
 leaves = round(tempZono.getLeaves({}));%tempZono.getLeaves({});%
 
 [ngb, num_leaves] = size(leaves);

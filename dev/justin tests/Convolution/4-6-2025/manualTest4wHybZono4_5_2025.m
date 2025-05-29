@@ -264,12 +264,28 @@ for dataiterate = 1:2
     
     % calculation of convSquare from old
     % convSquare = reshape(rot90(oldManualconvShape{i},2)*Ashape+bias(:,:,i),[size(testPoint,2)+convLength-1 size(testPoint,1)+convHeight-1])';
+    stackedBias = [];
+    stackedWeights = [];
+    stackedOutKeys = [];
+    for i = 1: length(weights)
+        stackedBias = [stackedBias; stackedConvBias{i}];
+        stackedWeights = [stackedWeights; rot90(stackedConvWeights{i},2)];
+        stackedOutKeys = [stackedOutKeys; outKeys{i}];
+    end
+    
+    for j = 1: length(X1sigma)
+            X1conv{j} = X1sigma{j}.transform(stackedBias,stackedWeights,reOrderKeys,stackedOutKeys');
+    end
+    
+    %% Old as of 5/27/2025
     for j = 1: length(X1sigma)
         for i = 1: length(weights)
-            X1conv{i,j} = X1sigma{j}.transform(stackedConvBias{i},rot90(stackedConvWeights{i},2),reOrderKeys,outKeys{i}');
+            X1convold{i,j} = X1sigma{j}.transform(stackedConvBias{i},rot90(stackedConvWeights{i},2),reOrderKeys,outKeys{i}');
         end
     end
     
+
+
     disp('past conv calc line 268')
     % 
     % for i = 1: length(weights)
@@ -295,16 +311,27 @@ for dataiterate = 1:2
     end
     
     %% Takes the projection relative to the snip keys
-                                                                                % some reason snipKeys need to be transposed cause dim keys are row
-                                                                                % vector.
+    % some reason snipKeys need to be transposed cause dim keys are row
+    % vector.
+    stackedSnipKeys = [];
+    for i = 1: length(weights)
+        stackedSnipKeys = [stackedSnipKeys; snipKeys{i}];
+    end
     
+    for j = 1: length(X1sigma)
+            X1conv1{j}  = X1conv{j}(stackedSnipKeys',:,:);
+    end
+
+
+%% Old as of 5/27/2025
     % Should specifically match layerProjection(1,1)
     for j = 1: length(X1sigma)
         for i = 1: length(weights)
-            X1conv1{i,j}  = X1conv{i,j}(snipKeys{i}',:,:);
+            X1conv1old{i,j}  = X1convold{i,j}(snipKeys{i}',:,:);
         end
     end
     
+    %% 5/27 above are equal to one another maybe
     % Corresponds to Lines 94-124
     %% Average Pooling Layer
     %% Creating pooling layer as one matrix
@@ -336,12 +363,24 @@ for dataiterate = 1:2
             poolKeys{i} = genMatIndexKeysRRowColumn(sprintf('P_%d',i),1,1, 14,14);
     end
     
+
+    %% old as of 5/27/2025
     for j = 1: length(X1sigma)
         for i = 1: length(weights)
-            xHybPoolOut1{i,j} = X1conv1{i,j}.transform(zeros(196,1),poolingShape,snipKeys{i},poolKeys{i});
+            xHybPoolOut1old{i,j} = X1conv1old{i,j}.transform(zeros(196,1),poolingShape,snipKeys{i},poolKeys{i});
+        end
+    end
+
+    %%
+    for j = 1: 1
+        xConvOut1{j} = plus(xHybPoolOut1old{1,j},xHybPoolOut1old{2,j});
+        for i = 3:20
+           xConvOut1{j} = plus(xConvOut1{j},xHybPoolOut1old{i,j});
         end
     end
     
+    disp('past combine calc')
+
     %% Working as of 4-6-2025
     
     % Combine each memzono individually to form giant memzono
@@ -353,19 +392,22 @@ for dataiterate = 1:2
     
     disp('past pool calc')
     %%
-    for j = 1: length(X1sigma)
-        xConvOut1{j} = plus(xHybPoolOut1{1,j},xHybPoolOut1{2,j});
-        for i = 3:20
-           xConvOut1{j} = plus(xConvOut1{j},xHybPoolOut1{i,j});
-        end
-    end
-    
-    disp('past combine calc')
-    % Corresponds to Lines 126-170
-    %%
-    for j = 1: length(X1sigma)
+    for j = 1: 1
         X1{j} = xConvOut1{j}(newPoolKeys,:,:);
     end
+    % Corresponds to Lines 126-170
+%%
+    stackedPoolingShape = kron(eye(size(weights,4)),poolingShape);
+    stackedPoolKeys = [];
+    for i = 1: length(weights)
+        stackedPoolKeys = [stackedPoolKeys; poolKeys{i}'];
+    end
+%%
+    for j = 1: length(X1sigma)
+            xHybPoolOut1{j} = X1conv1{j}.transform(zeros(size(stackedPoolingShape,1),1),stackedPoolingShape,stackedSnipKeys,stackedPoolKeys');
+    end
+
+
     % Taking ReLU with ReLUNN 
     % First Relu Layer (xxxx*50)
     % W * x + B
@@ -374,9 +416,8 @@ for dataiterate = 1:2
     
     %%
     for j = 1: length(X1sigma)
-        [NN1, Z1] = reluNN(X1{j}, Ws, bs, 1000);
+        [NN1, Z1] = reluNN(xHybPoolOut1{j}, Ws, bs, 1000);
         
-        %%
         % Current issue with bounds
         temp = Z1.Z('y_1');
         temp.b = double(temp.b);
