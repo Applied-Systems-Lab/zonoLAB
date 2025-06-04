@@ -5,10 +5,10 @@
 %       [x,fVal,exitFlag] = solveLP(f,A,b,Aeq,beq,lb,ub,opts)
 %   Inputs:
 %       f - n x 1 vector defining linear objective function to be maximized
-%       A - nC x n matrix defining equality constraints (A x = b)
-%       b - nC x 1 vector defining eqaulity constraints (A x = b)
-%       Aeq - nCeq x n matrix defining inequality constraints (Aeq x <= beq)
-%       beq - nCeq x 1 vector defining ineqaulity constraints (Aeq x <= beq)
+%       A - nC x n matrix defining inequality constraints (A x <= b)
+%       b - nC x 1 vector defining ineqaulity constraints (A x <= b)
+%       Aeq - nCeq x n matrix defining equality constraints (Aeq x = beq)
+%       beq - nCeq x 1 vector defining eqaulity constraints (Aeq x = beq)
 %       lb - n x 1 vector defining lower bounds (lb <= x)
 %       ub - n x 1 vector defining upper bounds (x <= ub)
 %       optSolver - solver options needed for linear propgram
@@ -33,11 +33,11 @@ switch optSolver.lpSolver
         if ~isempty([A b]) && isempty([Aeq beq])
             model.sense = '<';
             model.A = sparse(A);
-            model.rhs = b;
+            model.rhs = double(full(b));
         elseif isempty([A b]) && ~isempty([Aeq beq])
             model.sense = '=';
             model.A = sparse(Aeq);
-            model.rhs = beq;
+            model.rhs = double(full(beq));
         elseif ~isempty([A b]) && ~isempty([Aeq beq]) % Need to fix case where both are empty
             error('Can only use < or = constraints (not both) when using gurobi.')
         end
