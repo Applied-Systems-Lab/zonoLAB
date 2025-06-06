@@ -25,51 +25,39 @@ function [s,x_out] = supportFunc(obj,dims,d_in)
     end
 
     % Allows selection of keys based on startsWith
-    if ~iscell(dims)
-        dims = obj.keysStartsWith(dims).dimKeys;
-    end
+    if ~iscell(dims), dims = obj.keysStartsWith(dims).dimKeys; end
 
     % Default d_in behavior
-    if isempty(d_in)
-        d_in = eye(length(dims));
-    % (scaler behavior is weird...)
-    % elseif isscalar(d_in)
-    %     d_in = d_in*eye(length(dims));
-    end
+    if isempty(d_in), d_in = eye(length(dims)); end
 
     % Construct d
     d = zeros(obj.n,size(d_in,2));
     for i = 1:length(dims)
         idx_dim = strcmp(obj.dimKeys,dims{i});
-        for j = 1:size(d_in,2)
-            d(idx_dim,j) = d_in(i,j);
-        end
+        for j = 1:size(d_in,2), d(idx_dim,j) = d_in(i,j); end
     end
 
     if all([isnumeric(obj),isnumeric(d)],"all")
-        % [s,x] = projection(obj,dims).Z.supportFunc(d);
-        for j = 1:size(d,2)
-            [s(:,j),x(:,j)] = obj.Z.supportFunc(d(:,j));
-        end
+        [s,x] = projection(obj,dims).Z.supportFunc(d');
+        x = x';
+        % for j = 1:size(d,2)
+        %     [s(:,j),x(:,j)] = obj.Z_.supportFunc(d(:,j));
+        % end
     else
         if issym(obj)
             error('Sym version not implimented')            
         else %<=== assume optimvar
-            % [s,x] = supportFunOptimvar(projection(obj,dims),d);
-            % [s,x] = supportFunOptimvar(obj,d);
             for j = 1:size(d,2)
                 [s(:,j),x(:,j)] = supportFunOptimvar(obj,d(:,j));
             end
         end
     end
-
+    
     % Grab only dims of requested result
     for i = 1:length(dims)
         idx_dims(i) = find(strcmp(obj.dimKeys,dims{i}));
     end
-    x_out = x(idx_dims,:);
-
-
+    x_out = x(idx_dims,:);    
 end
 
 
