@@ -458,7 +458,7 @@ classdef memZono
         % test if special
         function out = isempty(obj)
             out = all([isempty(obj.G_),isempty(obj.c_),...
-                isempty(obj.A_),isemtpy(obj.b_)]);
+                isempty(obj.A_),isempty(obj.b_)]);
         end
         function out = issym(obj)
             % tests if any are symbolic
