@@ -14,27 +14,14 @@ clc;
 % rng(S)
 
 %% Load Neural Net
-% % example = 'hyperp';     % 4d  f = 4*X1 + 2*X2 + 5*X3
-% example = 'sincos';     % 3d  f = cos(X1) + sin(X2)
-% % example = 'linear';     % 2d    f = 3*X1
-% 
-% if(example == 'hyperp')
-%     load('hyperplane_4_4_4.mat',"NN")
-% elseif(example == 'sincos')
-%     load('sincos_20_10_10.mat',"NN")
-% else
-%     load('linear_4_5_4.mat',"NN")
-% end
-% load('NEWsincos2X_20_10_10.mat',"NN")
-% load('Papersincos2X_20_10_10.mat',"NN")
-% load('PaperDiffEpLinear2_4_5_4.mat',"NN")
-load('Paperlinear_4_5_4.mat',"NN")
 
+% load('6_2sincos2x_20_10_10.mat','NN')
+load('6_2linear_4_5_4.mat','NN')
 %%
 % Current zonoLab version does not have the resolved file, to get around
 % optSolver error add in empty '{}'
-tempZono = NN;
-% tempZono = NN.Z;
+% tempZono = NN.Z(NN.dimKeys);
+tempZono = NN.Z(NN.dimKeys);
 leaves = round(tempZono.getLeaves({}));%tempZono.getLeaves({});%
 
 [ngb, num_leaves] = size(leaves);
@@ -48,6 +35,7 @@ L = zeros(num_leaves,3);
 count = 0;
 
 tol = 1e-7;
+
 for leaf = 1 : num_leaves
     Zi{leaf,1} = conZono(tempZono.Gc,tempZono.c+tempZono.Gb*leaves(:,leaf),tempZono.Ac,tempZono.b-tempZono.Ab*leaves(:,leaf));
     

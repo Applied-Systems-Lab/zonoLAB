@@ -97,6 +97,29 @@ sevens_data = z;
 sevens_data = reshape(sevens_data,[size(sevens_data,1)*size(sevens_data,2) size(sevens_data,3)]);
 
 
+%% ReLu weigths and Biases
+Ws = {double(net1.Layers(4).Weights), double(net1.Layers(6).Weights), double(net1.Layers(8).Weights), double(net1.Layers(10).Weights)};
+bs = {double(net1.Layers(4).Bias), double(net1.Layers(6).Bias), double(net1.Layers(8).Bias), double(net1.Layers(10).Bias)};
+
+%% Average Pooling Layer
+    % Creating pooling layer as one matrix
+    poolLength = net1.Layers(3).PoolSize(1);
+    poolHeight = net1.Layers(3).PoolSize(2);
+    strideVert = net1.Layers(3).Stride(1);
+    strideHorz = net1.Layers(3).Stride(2);
+    
+    % Number of cells averaged
+    pool = 1/(poolLength*poolHeight);
+    
+    k = 1;
+    poolMatrix = pool*ones(net1.Layers(3).PoolSize);
+
+%% Same Convolution partitioning:
+    %% Finds the partitions for a projection relative to a subset of the overall data
+    snipKeys = [];
+    startH = floor(convHeight/2) + 1;
+    startL = floor(convLength/2) + 1;
+
 %% Brightening Attack set up.
 inputKeys = genMatIndexKeysRRowColumn('Z',1,1,inputHeight+2*(convHeight-1),inputWidth+2*(convLength-1));
 sigmas = linspace(0.1,0.5,21);
@@ -136,12 +159,7 @@ for dataiterate = 1:2
     for j = 1: length(X1sigma)
             X1conv{j} = X1sigma{j}.transform(stackedConvBias,stackedConvWeights,reOrderKeys,stackedOutKeys');
     end
-    
-    %% Same Convolution partitioning:
-    %% Finds the partitions for a projection relative to a subset of the overall data
-    snipKeys = [];
-    startH = floor(convHeight/2) + 1;
-    startL = floor(convLength/2) + 1;
+   
     
 %% GENKEY FUNCTION
     for i = 1: length(weights)
@@ -155,21 +173,7 @@ for dataiterate = 1:2
             X1conv{j}  = X1conv{j}(stackedSnipKeys',:,:);
     end
 
-    %% Different Layer of the Neural Network (Average Pooling Layer)
-
-    %% Average Pooling Layer
-    % Creating pooling layer as one matrix
-    poolLength = net1.Layers(3).PoolSize(1);
-    poolHeight = net1.Layers(3).PoolSize(2);
-    strideVert = net1.Layers(3).Stride(1);
-    strideHorz = net1.Layers(3).Stride(2);
-    
-    % Number of cells averaged
-    pool = 1/(poolLength*poolHeight);
-    
-    k = 1;
-    poolMatrix = pool*ones(net1.Layers(3).PoolSize);
-    
+    %% Different Layer of the Neural Network (Average Pooling Layer)    
 %% TOPLIZIFY FUNCTION
     %% Create function that will create this in one go
     for j = 1: strideVert : inputHeight
@@ -190,30 +194,28 @@ for dataiterate = 1:2
     stackedPoolKeys = [poolKeys{:}];
 
 %% Already Implemented, ReluNN
-    Ws = {double(net1.Layers(4).Weights), double(net1.Layers(6).Weights), double(net1.Layers(8).Weights), double(net1.Layers(10).Weights)};
-    bs = {double(net1.Layers(4).Bias), double(net1.Layers(6).Bias), double(net1.Layers(8).Bias), double(net1.Layers(10).Bias)};
 
     for j = 1: length(X1sigma)
         xHybPoolOut1 = X1conv{j}.transform([],stackedPoolingShape,stackedSnipKeys,stackedPoolKeys);
 
-        [~, Z1] = reluNN(xHybPoolOut1, Ws, bs, 1000);
-        
-        [lowerBounds(j,dataiterate),upperBounds(j,dataiterate)] = bounds(Z1.Z('y_1'));
+        [NN, Z1] = reluNN(xHybPoolOut1, Ws, bs, 1000);
+        % 
+        % [lowerBounds(j,dataiterate),upperBounds(j,dataiterate)] = bounds(Z1.Z('y_1'));
         toc
         disp('Past Bounds')
     end
 end
-%%
-figure('Name','Output Range')
-shade(sigmas,lowerBounds(:,1),'r',sigmas,upperBounds(:,1),'r','FillType',[1 2;2 1]);
-hold on
-shade(sigmas,lowerBounds(:,2),'b',sigmas,upperBounds(:,2),'b','FillType',[1 2;2 1]);
-legend('','','1s','','','7s')
-grid on;
-fontsize(gcf,scale=1.5)
-xlabel('fraction of σ')
-ylabel('prediction interval')
-xlim([min(sigmas),max(sigmas)])
+% %%
+% figure('Name','Output Range')
+% shade(sigmas,lowerBounds(:,1),'r',sigmas,upperBounds(:,1),'r','FillType',[1 2;2 1]);
+% hold on
+% shade(sigmas,lowerBounds(:,2),'b',sigmas,upperBounds(:,2),'b','FillType',[1 2;2 1]);
+% legend('','','1s','','','7s')
+% grid on;
+% fontsize(gcf,scale=1.5)
+% xlabel('fraction of σ')
+% ylabel('prediction interval')
+% xlim([min(sigmas),max(sigmas)])
 
 %% Extra functions for memzono functionality / plotting
 function [Z] = interval_hull_of_points(data,threshold,keys)

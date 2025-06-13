@@ -13,7 +13,7 @@ clc;
 fromScratch = true;
 
 %% Training Data
-load('set_up_data_2000.mat')
+load('classification_data.mat')
 N = size(data,2);
 x1 = class1(1,:);
 y1 = class1(2,:);
@@ -39,6 +39,8 @@ if(fromScratch)
              reluLayer
              fullyConnectedLayer(10)
              reluLayer
+             fullyConnectedLayer(10)
+             reluLayer
              fullyConnectedLayer(5)
              reluLayer
              fullyConnectedLayer(2)             % Was changed from 1 to 2?
@@ -48,9 +50,9 @@ if(fromScratch)
          
     net = trainNetwork(input_train', output_train', layers, options);
 
-    save('2000dp10000epMIMO1+1Classification.mat')
+    save('200dpClass.mat')
 else
-    load('2000dp10000epMIMO1+1Classification.mat')
+    % load('2000dp10000epMIMO1+1Classification.mat')
 end
 
 
@@ -59,7 +61,7 @@ end
 input_test = data(1:2,1:0.2*N);
 
 output_test = predict(net,input_test');
-output_validate = data(3:4,1:0.2*N)';
+output_validate = data(3,1:0.2*N)';
 
 %%
 % output_validate(find(output_validate(:,1)==-1),1)=0;
@@ -105,25 +107,36 @@ a = 1000;
 [NN,Y] = reluNN(X,Ws,bs,a);
 
 %%
-figure
+NNc1 = NN(NN.dimKeys(1:3));
+NNc2 = NN([NN.dimKeys(1:2) NN.dimKeys(4)]);
+
+%%
+AZ =  -124;
+EL =   50;
+
+fig = figure;
+
 f = @(x) 15.*(x-.5).*(x+1).*x.*(x+.5).*sin(1.2*(x-.25))-.35;
-fplot(f, [-1 1])
+fplot(f, [-1 1],'Color',[0.5 0.5 0.5],'LineWidth',3)
 hold on
 % plot(goods(1,:), goods(2,:), 'r.', 'MarkerSize', 10)
 % plot(bads(1,:), bads(2,:), 'b.','MarkerSize',10)
 
 axis([-1 1 -1 1])
+box off
 
-rnd = round(output_test);
 
-for i = 1:0.2*N
-    if(rnd(i) == 1)
-        plot(input_test(1,i),input_test(2,i),'bx', 'MarkerSize', 15);
-    elseif(rnd(i)==0)
-        plot(input_test(1,i),input_test(2,i),'rx', 'MarkerSize', 15);
+for i = 1:N
+    if(data(3,i) == 1)
+        scatter3(data(1,i),data(2,i),1, 40,'b.');
+    elseif(data(3,i) == 0)
+        scatter3(data(1,i),data(2,i),0, 40,'r.');
     end
 end
 
-NNc1 = NN(NN.dimKeys(1:3));
-NNc2 = NN([NN.dimKeys(1:2) NN.dimKeys(4)]);
-% plot(NN.Z,'k',0.2)
+%%
+plot(NNc2.Z(NNc2.dimKeys),'k',0.2)
+view([AZ,EL])
+
+%% Retraining
+
