@@ -57,6 +57,10 @@ end
 
 
 %% Generate data set
+clear
+clc
+close all
+load('200dpClass.mat')
 
 input_test = data(1:2,1:0.2*N);
 
@@ -110,12 +114,11 @@ a = 1000;
 NNc1 = NN(NN.dimKeys(1:3));
 NNc2 = NN([NN.dimKeys(1:2) NN.dimKeys(4)]);
 
-%%
-AZ =  -124;
-EL =   50;
+%%      
 
 fig = figure;
-
+% ax1 = subplot(1,2,1);
+fig.Position = [867   403   877   612];
 f = @(x) 15.*(x-.5).*(x+1).*x.*(x+.5).*sin(1.2*(x-.25))-.35;
 fplot(f, [-1 1],'Color',[0.5 0.5 0.5],'LineWidth',3)
 hold on
@@ -136,7 +139,106 @@ end
 
 %%
 plot(NNc2.Z(NNc2.dimKeys),'k',0.2)
-view([AZ,EL])
 
-%% Retraining
+%%
+    xlabel('$x_1$','interpreter','latex','FontSize',28)
+    ylabel('$x_2$','interpreter','latex','FontSize',28)
+    zlabel('$\mathcal{F}(x)$','interpreter','latex','FontSize',28)
 
+%%
+
+% %% Point A
+% 
+% GcA = [  0.1 0;
+%         0 0.1
+%       ];
+% cA = [0.7;0.9];
+% 
+% 
+% %% Point B
+% 
+% GcB = [  0.1 0;
+%         0 0.1
+%       ];
+% cB = [0.8;-0.8];
+% 
+% 
+% %% Point C
+% 
+% GcC = [  0.2 0;
+%         0 0.2
+%       ];
+% cC = [-0.2;0];
+% 
+% %% Point D
+% 
+% GcD = [  0.2 0;
+%         0 0.1
+%       ];
+% cD = [-0.2;-0.9];
+% 
+% domainClassA = conZono(GcA,cA);
+% domainClassB = conZono(GcB,cB);
+% domainClassC = conZono(GcC,cC);
+% domainClassD = conZono(GcD,cD);
+% 
+% plot(domainClassA,'g',0.2)
+% plot(domainClassB,'g',0.2)
+% plot(domainClassC,'g',0.2)
+% plot(domainClassD,'g',0.2)
+% 
+% intersectedClassA = NNc2.Z(NNc2.dimKeys).and(domainClassA,[1 0 0; 0 1 0]);
+% intersectedClassB = NNc2.Z(NNc2.dimKeys).and(domainClassB,[1 0 0; 0 1 0]);
+% intersectedClassC = NNc2.Z(NNc2.dimKeys).and(domainClassC,[1 0 0; 0 1 0]);
+% intersectedClassD = NNc2.Z(NNc2.dimKeys).and(domainClassD,[1 0 0; 0 1 0]);
+% 
+% plottingintersectedClassA = intersectedClassA;
+% plottingintersectedClassB = intersectedClassB;
+% plottingintersectedClassC = intersectedClassC;
+% plottingintersectedClassD = intersectedClassD;
+% 
+% plottingintersectedClassA.c = plottingintersectedClassA.c+[0;0;0.003];
+% plottingintersectedClassB.c = plottingintersectedClassB.c+[0;0;0.01];
+% plottingintersectedClassC.c = plottingintersectedClassC.c+[0;0;0.01];
+% plottingintersectedClassD.c = plottingintersectedClassD.c+[0;0;0.01];
+% 
+% plot(plottingintersectedClassA,'g',0.5)
+% plot(plottingintersectedClassB,'g',0.5)
+% plot(plottingintersectedClassC,'g',0.5)
+% plot(plottingintersectedClassD,'g',0.5)
+
+% AZ =    -123.7833;
+% EL =   36.5541;
+% view([AZ,EL])
+% 
+% AZ =    -218.4039;
+% EL =   31.1818;
+% view([AZ,EL])
+% 
+% AZ =    -180;
+% EL =   0;
+% view([AZ,EL])
+
+
+
+%%
+% ax2 = subplot(1,2,2);
+% load('binClass.mat')
+% hold on
+% plot(class1(1,:), class1(2,:), 'r.', 'MarkerSize', 10)
+% plot(class2(1,:), class2(2,:), 'b.','MarkerSize',10)
+% fplot(f, [-1 1],'Color',[0.5 0.5 0.5],'LineWidth',3)
+% axis([-1 1 -1 1])
+% 
+% xlabel('$x_1$','interpreter','latex','FontSize',28)
+% ylabel('$x_2$','interpreter','latex','FontSize',28)
+
+%%
+for i = 1: 72
+    for j = 1:2
+        AZs = -120;
+        ELs = 36;
+        view(AZs-5*i, ELs)
+        exportgraphics(gcf,'binClass.gif',Append=true)
+    end
+end

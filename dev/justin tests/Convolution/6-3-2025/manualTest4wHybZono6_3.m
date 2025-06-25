@@ -180,13 +180,13 @@ disp('dataiterate start')
 for dataiterate = 1:2
 %% Brightening Attack set up.
     tic
-    for i = 1: length(sigmas)
+    parfor i = 1: length(sigmas)
         X1sigma = interval_hull_of_points(data{dataiterate}, sigmas(i),inputKeys');
         X1sigma = X1sigma(reOrderKeys',:,:);
         X1conv = X1sigma.transform(stackedConvBias,stackedConvWeights,reOrderKeys,outKeys',"retainExtraDims",false);
         X1conv  = X1conv(snipKeys',:,:);
         xHybPoolOut1 = X1conv.transform([],stackedPoolingShape,snipKeys,poolKeys',"retainExtraDims",false);
-        [NN{i,dataiterate},Z1] = reluNN(xHybPoolOut1, Ws, bs, 1000);
+        [NN{i,dataiterate},~] = reluNN(xHybPoolOut1, Ws, bs, 1000);
     end
     toc
 end
@@ -207,6 +207,15 @@ fontsize(gcf,scale=1.5)
 xlabel('fraction of σ')
 ylabel('prediction interval')
 xlim([min(sigmas),max(sigmas)])
+
+%%
+ for dataiterate = 1:2
+%% Brightening Attack set up.
+    tic
+    for i = 1: 2
+        tempX1sigma{i} = interval_hull_of_points(data{dataiterate}, sigmas(i),inputKeys');
+end
+end
 
 %% Extra functions for memzono functionality / plotting
 function [Z] = interval_hull_of_points(data,threshold,keys)

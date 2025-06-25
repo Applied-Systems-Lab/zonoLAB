@@ -227,12 +227,12 @@ clc
 clear
 close all
 
-load('Papersincos_20_10_10.mat')
-sincosSlope = calcLCTwo(NN,1e-7);
+load('6_2sincos2x_20_10_10.mat')
+% sincosSlope = calcLCTwo(NN,1e-7);
 
-indx = find(sincosSlope == max(sincosSlope(:,4)));
+% indx = find(sincosSlope == max(sincosSlope(:,4)));
 
-tempZono = NN.Z;
+tempZono = NN.Z(NN.dimKeys);
 leaves = round(tempZono.getLeaves({}));
 [ngb, num_leaves] = size(leaves);
 for leaf = 1 : num_leaves
