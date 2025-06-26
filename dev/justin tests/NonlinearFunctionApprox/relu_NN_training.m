@@ -154,6 +154,7 @@ fprintf('Zonotope model: ')
 toc
 
 %% Plot Hybrid Zonotope
+% Will not work with lastest zonotope version 6/26/2025
 subplot(1,4,4)
 plot(NN.Z,'r',0.8);
 grid on;

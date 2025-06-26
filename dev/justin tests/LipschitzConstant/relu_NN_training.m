@@ -1,6 +1,7 @@
 % Programmer Name: Justin Chen
 % The following program will train a neural network with a set sample point
 % and display the error from the actual data.
+% Updated to work 6-26-2025
 
 clear all; close all; clc;
 
