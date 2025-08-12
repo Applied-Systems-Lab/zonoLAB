@@ -102,49 +102,150 @@ end
 
 %% Plotting
 fig = figure;
+t = tiledlayout(1,2,"TileSpacing","tight","Padding","compact");
 
-% State plots
-subplot(1,2,1);
+% State plot
+ax1 = nexttile;
 hold on;
-plot(XF.Z(xDim(N)), 'g', 1);
-drawnow;
-for k = 1:N
-    plot(Xinter.Z(xDim(k)), selectColor(k), 0.6);
-    plot(X{k}.Z(xDim(k)), selectColor(k), 0.2);
-    drawnow;
-end
-hold off;
-
 axis equal;
 xlim([-3 3]);
 ylim([-3 3]);
 xlabel('$x_1$','Interpreter','latex');
 ylabel('$x_2$','Interpreter','latex');
+lgd1 = legend("Location","NorthWest",'Interpreter','latex','NumColumns',2,'Orientation','horizontal');
+lgd1.Title.String = "State Reachability";
 
+% X_k
+for k =1:3
+    plot(X{k}.Z(xDim(k)),selectColor(k),0.2); 
+        p_X_(k) = gca().Children(1);
+        p_X_(k).set("DisplayName",strcat("$\mathcal{X}_",num2str(k-1),"$"));
+    plot(Xinter.Z(xDim(k)),selectColor(k),0.6); 
+        p_Xinter_(k) = gca().Children(1);
+        p_Xinter_(k).set("DisplayName",strcat("$\mathcal{X}^{*}_",num2str(k-1),"$"));
+end
+% X_0
+p_X0 = p_X_(1);
+% X_F
+p_XF = p_Xinter_(N); %<= same as final timestep for intersection...
+p_XF.set("FaceColor","g","FaceAlpha",0.6);
+p_XF.set("DisplayName","$\mathcal{X}_F$")
 
-% Input Plots
-subplot(1,2,2);
-hold on;
-uDims = [uDim(1),uDim(2)];
-plot(Xall,uDims,'b',0.2);
-plot(Xinter,uDims,'b',0.6);
-% plot(Xall,[uDim(1),uDim(2)],'b',0.2);
-% plot(Xinter,[uDim(1),uDim(2)],'b',0.6);
-% plot(Z([U{1}; U{2}],[uDim(1),uDim(2)]),'b',0.2);
-% plot(Xinter.Z([uDim(1),uDim(2)]),'b',0.6);
-drawnow
-hold off;
-
+% Input Plot
+ax2 = nexttile;
 axis equal;
 xlim([-2 2]);
 ylim([-2 2]);
 xlabel('$u(1)$','Interpreter','latex');
 ylabel('$u(2)$','Interpreter','latex');
+lgd1 = legend("Location","NorthWest",'Interpreter','latex','NumColumns',2);
+lgd1.Title.String = "Input Set";
 
-
+% U_bounds
+uDims = [uDim(1),uDim(2)];
+plot(Xall,uDims,'b',0.2); p_U = gca().Children(1);
+p_U.set("DisplayName","$\mathcal{U}$")
+plot(Xinter,uDims,'b',0.6); p_Uinter = gca().Children(1);
+p_Uinter.set("DisplayName","$\mathcal{U}^{*}$");
 
 %%% Save Fig:
-saveas(fig,'ex_reachability_basic.png')
+ex_folder = "examples\memZono\figs\ex_reachability_basic";
+mkdir(ex_folder);
+imname = @(k) strcat(ex_folder,filesep,num2str(k),".png");
+fig.set("WindowStyle","normal","WindowState","normal");
+pause(1);
+fig.set("Position",[0 0 1300 750],"InvertHardcopy","off","Color",'w');
+pause(1); drawnow;
+saveas(fig,strcat(ex_folder,filesep,'ex_reachability_basic.png'));
+% fig.set("WindowStyle","docked")
+% pause(1);
+
+%%% Generate Animation
+p_All = [p_X_,p_Xinter_,p_U,p_Uinter];
+set(p_All,"Visible","off");
+
+% Initial Conditions
+set(p_X0,"Visible","on");
+% Final State
+set(p_XF,"Visible","on");
+% Input Set Bounds
+set(p_U,"Visible","on");
+
+drawnow; pause(1); 
+saveas(fig,imname(0));
+j = 1;
+% Forward Propagation
+set(p_XF,"Visible","off");
+for k = 1:N
+    set(p_X_(k),"Visible","on");
+    drawnow; F(j) = getframe(fig);
+    saveas(fig,imname(j));
+    j = j + 1;
+end
+
+% Intersection
+% (display X_F)
+set(p_XF,"Visible","on");
+drawnow; pause(1);
+F(j) = getframe(fig);
+saveas(fig,imname(j));
+j = j + 1;
+
+% remaining ones (take slice)
+set([p_Xinter_,p_Uinter],"Visible","on")
+drawnow; pause(1);
+F(j) = getframe(fig);
+saveas(fig,imname(j));
+
+
+
+set(gcf,"WindowStyle","docked")
+
+% return
+
+% fig = figure;
+% % State plots
+% subplot(1,2,1);
+% hold on;
+% plot(XF.Z(xDim(N)), 'g', 1);
+% drawnow;
+% for k = 1:N
+%     plot(Xinter.Z(xDim(k)), selectColor(k), 0.6);
+%     plot(X{k}.Z(xDim(k)), selectColor(k), 0.2);
+%     drawnow;
+% end
+% hold off;
+
+% axis equal;
+% xlim([-3 3]);
+% ylim([-3 3]);
+% xlabel('$x_1$','Interpreter','latex');
+% ylabel('$x_2$','Interpreter','latex');
+
+
+% % Input Plots
+% subplot(1,2,2);
+% hold on;
+% uDims = [uDim(1),uDim(2)];
+% plot(Xall,uDims,'b',0.2);
+% plot(Xinter,uDims,'b',0.6);
+% % plot(Xall,[uDim(1),uDim(2)],'b',0.2);
+% % plot(Xinter,[uDim(1),uDim(2)],'b',0.6);
+% % plot(Z([U{1}; U{2}],[uDim(1),uDim(2)]),'b',0.2);
+% % plot(Xinter.Z([uDim(1),uDim(2)]),'b',0.6);
+% drawnow
+% hold off;
+
+% axis equal;
+% xlim([-2 2]);
+% ylim([-2 2]);
+% xlabel('$u(1)$','Interpreter','latex');
+% ylabel('$u(2)$','Interpreter','latex');
+
+
+
+% %%% Save Fig:
+% saveas(fig,strcat('ex_reachability_basic.png'))
 
 %% local functions
 function color = selectColor(i)

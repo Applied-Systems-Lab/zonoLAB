@@ -1,5 +1,6 @@
 %% memZono Example: SLAM
 clear; clc;
+close all;
 %% Plot settings 
 set(0,'defaultLineLineWidth', 2)
 set(0,'defaultAxesFontName' , 'Times')
@@ -198,7 +199,45 @@ drawnow;
 saveas(fig2,'ex_SLAM.png')
 % % print to eps file:
 % print(fig2,'ex_SLAM','-depsc','-vector')
-% exportgraphics(fig2,'ex_SLAM_exportGraphics.eps', ContentType='vector')
+% exportgraphics(fig2,'ex_SLAM_exportGraphics.eps', ContentType='vector') %<=== use for exporting to illustrator
+
+ex_folder = "examples\memZono\figs\ex_SLAM";
+mkdir(ex_folder);
+fig3 = figure("WindowStyle","normal","Position",[0 0 1000 800]);
+t3 = tiledlayout('flow','TileSpacing','compact','Padding','compact');
+
+gifFile = strcat(ex_folder,filesep,'ex_SLAM.gif');
+temp = copyobj(ax{end},t3);
+legend();
+title([])
+xlabel('x')
+ylabel('y')
+xlim([-2 11])
+ylim([-5 5])
+drawnow;
+
+saveas(fig3,strcat(ex_folder,filesep,'0','.png'));
+% exportgraphics(fig3,gifFile,"Append",true);
+[cdata,cmap] = rgb2ind(getframe(gcf).cdata,256);
+imwrite(cdata,cmap,gifFile,'LoopCount',Inf,'DelayTime',0.5);
+for i = 1:N
+    delete(temp);
+    temp = copyobj(ax{i},t3);
+    legend();
+    title([])
+    xlabel('x')
+    ylabel('y')
+    xlim([-2 11])
+    ylim([-5 5])
+    drawnow;
+    saveas(fig3,strcat(ex_folder,filesep,num2str(i),'.png'));
+    % exportgraphics(fig3,gifFile,"Append",true);
+    [cdata,cmap] = rgb2ind(getframe(gcf).cdata,256);
+    imwrite(cdata,cmap,gifFile,'WriteMode','append','DelayTime',0.5);
+end
+
+
+
 
 
 %% Local Functions

@@ -1,6 +1,6 @@
 %% Example Function Creation
 clear; 
-% close all;
+close all;
 %% Plot settings 
 set(0,'defaultLineLineWidth', 2)
 set(0,'defaultAxesFontName' , 'Times')
@@ -149,6 +149,13 @@ set(0,'defaultAxesGridLineStyle','-.')
 
 % end
 
+
+
+
+
+
+
+
 % if false
 % %% Symbolic things
 % xshift = 10;
@@ -158,88 +165,88 @@ set(0,'defaultAxesGridLineStyle','-.')
 % end
 
 
-if false
+% if false
 
-%% Function Setup
-n = 11;
-x0 = 5;
-bd = [-x0,x0];
+% %% Function Setup
+% n = 11;
+% x0 = 5;
+% bd = [-x0,x0];
 
-% functions
-f1 = @(x) cos(x);
-f2 = @(x) sin(x);
-% f = @(x) f1(x(1)) + f2(x(2));
+% % functions
+% f1 = @(x) cos(x);
+% f2 = @(x) sin(x);
+% % f = @(x) f1(x(1)) + f2(x(2));
 
-Fm1 = makeSOSfunc(f1,n,bd,{'x1','y'},'sin');
-Fm2 = makeSOSfunc(f2,n,bd,{'x2','y'},'cos');
-Fm = Fm1 + Fm2;
-
-
-% NN version
-% load("examples\Neural_Networks\relu_sin_cos_2_20_10_10_1.mat");
-load("examples\Neural_Networks\NEWsincos_20_10_10.mat")
-% load("examples\Neural_Networks\NEW2sincos_20_10_10.mat")
-X = memZono(zono(diag([x0,x0]),zeros(2,1)),{'x1','x2'});
-NN = reluNN(X,Ws,bs,a);
-NN = NN.relabelDims(NN.dimKeys,{'x1','x2','y'}); %<== assumes defaults are in order
-
-% Exaluation Version
-xstep = 0.1;
-x = -x0:xstep:x0;
-[X1,X2] = meshgrid(x,x);
-Y = f1(X1) + f2(X2);
-
-% error
-Y_Fm = X.funMap(Fm,{'x1','x2'},{'y'},'Xin');
-% Y_Fm = X.and(Fm,'Xin').projection('y'); %<= map X through Fm and project to y
-Y_NN = NN('y'); %<= projection of NN along Y (already maps X)
-Y_E = Y_NN + -1*Y_Fm; %<== calc difference between them (w/ same input space factors)
-E = cartProd(X,Y_E); %<= combine together again...
-% end
+% Fm1 = makeSOSfunc(f1,n,bd,{'x1','y'},'sin');
+% Fm2 = makeSOSfunc(f2,n,bd,{'x2','y'},'cos');
+% Fm = Fm1 + Fm2;
 
 
-% if true
-% Plot
-dims = {'x1','x2','y'};
+% % NN version
+% % load("examples\Neural_Networks\relu_sin_cos_2_20_10_10_1.mat");
+% load("examples\Neural_Networks\NEWsincos_20_10_10.mat")
+% % load("examples\Neural_Networks\NEW2sincos_20_10_10.mat")
+% X = memZono(zono(diag([x0,x0]),zeros(2,1)),{'x1','x2'});
+% NN = reluNN(X,Ws,bs,a);
+% NN = NN.relabelDims(NN.dimKeys,{'x1','x2','y'}); %<== assumes defaults are in order
 
-figure;
-t = tiledlayout("flow");
-% Actual
-ax(1) = nexttile; hold on;
-surf(X1,X2,Y, 'EdgeColor', 'none');
-title('f(x) = cos(x_1) + sin(x_2)');
+% % Exaluation Version
+% xstep = 0.1;
+% x = -x0:xstep:x0;
+% [X1,X2] = meshgrid(x,x);
+% Y = f1(X1) + f2(X2);
 
-% Func Creation
-ax(end+1) = nexttile; hold on;
-plot(Fm,dims,'r',1);
-title('memZono Direct Construction')
-
-% Func error
-ax(end+1) = nexttile; hold on;
-plot(E,dims,'r');
-title('memZono Direct Error')
+% % error
+% Y_Fm = X.funMap(Fm,{'x1','x2'},{'y'},'Xin');
+% % Y_Fm = X.and(Fm,'Xin').projection('y'); %<= map X through Fm and project to y
+% Y_NN = NN('y'); %<= projection of NN along Y (already maps X)
+% Y_E = Y_NN + -1*Y_Fm; %<== calc difference between them (w/ same input space factors)
+% E = cartProd(X,Y_E); %<= combine together again...
+% % end
 
 
-% NN version
-ax(end+1) = nexttile; hold on;
-plot(NN.Z(dims),'r',1);
-title('trained reluNN construction')
+% % if true
+% % Plot
+% dims = {'x1','x2','y'};
 
-% % NN error
-% Y_NN = arrayfun(@(x1,x2) FmEval(NN,[x1;x2]),X1,X2);
+% figure;
+% t = tiledlayout("flow");
+% % Actual
+% ax(1) = nexttile; hold on;
+% surf(X1,X2,Y, 'EdgeColor', 'none');
+% title('f(x) = cos(x_1) + sin(x_2)');
+
+% % Func Creation
 % ax(end+1) = nexttile; hold on;
-% surf(X1,X2,Y_NN - Y);
-% title('NN error')
+% plot(Fm,dims,'r',1);
+% title('memZono Direct Construction')
+
+% % Func error
+% ax(end+1) = nexttile; hold on;
+% plot(E,dims,'r');
+% title('memZono Direct Error')
 
 
-%% common settings
-view(ax,3);
-xlabel(ax,dims{1});
-ylabel(ax,dims{2});
-zlabel(ax,dims{3});
-zlim(ax,[-2 2]);
+% % NN version
+% ax(end+1) = nexttile; hold on;
+% plot(NN.Z(dims),'r',1);
+% title('trained reluNN construction')
 
-end
+% % % NN error
+% % Y_NN = arrayfun(@(x1,x2) FmEval(NN,[x1;x2]),X1,X2);
+% % ax(end+1) = nexttile; hold on;
+% % surf(X1,X2,Y_NN - Y);
+% % title('NN error')
+
+
+% %% common settings
+% view(ax,3);
+% xlabel(ax,dims{1});
+% ylabel(ax,dims{2});
+% zlabel(ax,dims{3});
+% zlim(ax,[-2 2]);
+
+% end
 
 
 
@@ -247,36 +254,24 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if true
-    
-    % Y_vol = memZono(zono(0.1,0),'y');
-    % Y_vol = 0*Y_vol;
-    vol = zono(5e-2,0);
-    
-    % sin(x) - cos(x)
-    % n=11; x0 = 5; bd = [-x0,x0];
-    % Fm_sin = makeSOSfunc(@sin,n,bd,{'x_1','y_1'},'sin') + memZono(vol,'y_1','sin_vol');
-    % Fm_cos = makeSOSfunc(@cos,n,bd,{'x_2','y_2'},'cos') + memZono(vol,'y_2','cos_vol');
-    % Xin = memZono(zono(x0,0),'x');
-    % Ym_sin = Xin.and(relabelDims(Fm_sin,{'x_1','y_1'},{'x','y'}),'xsin').projection('y');
-    % Ym_cos = Xin.and(relabelDims(Fm_cos,{'x_2','y_2'},{'x','y'}),'xcos').projection('y');
+
+    vol = zono(5e-2,0); %<= volume/uncertainty
     n=11; x0 = 5; bd = [-x0,x0];
     Fm_cos = makeSOSfunc(@cos,n,bd,{'x','y'},'cos') + memZono(vol,'y','cos_vol');
     Fm_sin = makeSOSfunc(@sin,n,bd,{'x','y'},'sin') + memZono(vol,'y','sin_vol');
     Xin = memZono(zono(x0,0),'x');
     Ym_cos = Xin.and(Fm_cos,'xcos').projection('y');
     Ym_sin = Xin.and(Fm_sin,'xsin').projection('y');
-    % Ym_cos_mius_sin = Ym_cos + -1*Ym_sin;
-    % XYm_cos_sin = [Xin; Ym_cos_mius_sin]
         
     
     fig = figure('WindowStyle','normal');
     hold on;
     t = tiledlayout(fig,1,1,"Padding","tight"); 
     ax = nexttile; 
-    plot(Fm_cos,{'x','y'},'r'); p(1) = ax.Children(1); p(1).DisplayName='$\mathcal{F}_{cos}$';
-    plot(Fm_sin,{'x','y'},'g'); p(end+1) = ax.Children(1); p(end).DisplayName='$\mathcal{F}_{sin}$';
-    plot(Xin+Ym_cos+Ym_sin,{'x','y'},'b'); p(end+1) = ax.Children(1); p(end).DisplayName='$\mathcal{F}_{cos} + \mathcal{F}_{sin}$';
-    plot(Xin+Ym_cos+-1*Ym_sin,{'x','y'},'c'); p(end+1) = ax.Children(1); p(end).DisplayName='$\mathcal{F}_{cos} - \mathcal{F}_{sin}$';
+    plot(Fm_cos,{'x','y'},'r'); p_cos = ax.Children(1); p_cos.DisplayName='$\mathcal{F}_{cos}$';
+    plot(Fm_sin,{'x','y'},'g'); p_sin = ax.Children(1); p_sin.DisplayName='$\mathcal{F}_{sin}$';
+    plot(Xin+Ym_cos+Ym_sin,{'x','y'},'b'); p_plus = ax.Children(1); p_plus.DisplayName='$\mathcal{F}_{cos} + \mathcal{F}_{sin}$';
+    plot(Xin+Ym_cos+-1*Ym_sin,{'x','y'},'c'); p_minus = ax.Children(1); p_minus.DisplayName='$\mathcal{F}_{cos} - \mathcal{F}_{sin}$';
     % plot(Xin+3*Ym_cos+Ym_sin,{'x','y'},'y'); p(end+1) = ax.Children(1); p(end).DisplayName='$3\mathcal{F}_{cos} + \mathcal{F}_{sin}$';
 
 
@@ -284,19 +279,87 @@ if true
     Fm_cos_inter = relabelDims(Fm_cos,{'x','y'},{'inter','y'});
     Fm_cos_sin = Fm_sin_inter.and(Fm_cos_inter,'cos_inter_y');
 
-    plot(Fm_cos_sin,{'x','y'},'m'); p(end+1) = ax.Children(1); p(end).DisplayName='$\mathcal{F}_{cos} \circ \mathcal{F}_{sin}$';
+    plot(Fm_cos_sin,{'x','y'},'m'); p_comp = ax.Children(1); p_comp.DisplayName='$\mathcal{F}_{cos} \circ \mathcal{F}_{sin}$';
 
+    p = [p_cos,p_sin,p_plus,p_minus,p_comp];
 
     % Plotting Settings
-    ax.Children = flipud(ax.Children);
-    legend('Interpreter','latex','Direction','reverse')    
+    % ax.Children = flipud(ax.Children);
+    legend('Interpreter','latex')%,'Direction','reverse')    
     set(p,'LineWidth',1);
     grid on; %axis("square");
     xlabel("dim = {`x'}");
     ylabel("dim = {`y'}");
+    xlim(bd);
+    ylim('auto');
+    
+    yline(0,'-','HandleVisibility','off');
+    yline([-1 1],'--','HandleVisibility','off');
+    % xline(0,'-','HandleVisibility','off');
+
+
+    %% Create Annotations/animations
+    subfolder = 'examples\memZono\figs\ex_sin_cos_1D';
+    mkdir(subfolder);
 
     set(fig,'Position',[-2e3,1e3,1e3,5e2]); 
-    saveas(fig,'sin_cos_comp_1D.png');
+    saveas(fig,strcat(subfolder,filesep,"sin_cos_comp_1D.png"));
+if true
+    % Create individual
+    set(p,'Visible','off');
+    % sin and cos
+    set(p(1:2),'Visible','on');
+    saveas(fig,strcat(subfolder,filesep,'0','.png'));
+
+    % domain shift
+    an(1) = annotation("arrow",[0.55,0.67],[0.27,0.27]);
+    an(2) = annotation('textbox',[0.5,0.27,0.3,0.1],'Interpreter','latex');
+    an(2).String = '$\sin(x) = \cos(x + \frac{\pi}{2})$';
+    set(an(2),"EdgeColor",'none');
+    an(3:4) = xline(ax,[0 pi/2],'--','HandleVisibility','off','Interpreter','latex');
+    set(an(3:4),'LabelVerticalAlignment','bottom','FontSize',14);
+    an(3).Label = '$x=0$'; 
+    an(4).Label = '$x=\frac{\pi}{2}$';
+    saveas(fig,strcat(subfolder,filesep,'xshift','.png'));
+    delete(an)
+
+    %sin + cos
+    set(p_plus,'Visible','on'); 
+    saveas(fig,strcat(subfolder,filesep,'plus','.png'));
+    set(p_plus,'Visible','off'); delete(an);
+
+    %sin - cos
+    set(p_minus,'Visible','on'); 
+    saveas(fig,strcat(subfolder,filesep,'minus','.png'));
+    set(p_minus,'Visible','off');
+    
+    %sin \circ cos
+    set(p_comp,'Visible','on'); 
+    saveas(fig,strcat(subfolder,filesep,'comp','.png'));
+    set(p_comp,'Visible','off');
+
+    % Create Animation
+    set(p,'Visible','off');
+    for i = 1:numel(p)
+        set(p(i),'Visible','on'); 
+        uistack(p(i),'top');
+        saveas(fig,strcat(subfolder,filesep,num2str(i),'.png'));
+    end
+
+end
+
+    % % sin \oplus cos (naive)
+    % set(p,'Visible','off');
+    % set([p_sin,p_cos,p_plus,p_minus],'Visible','on'); 
+    % plot(cartProd(Xin.Z('x'),Fm_cos.Z('y')+Fm_sin.Z({'y'})),'k',0.7); tmp = ax.Children(1); 
+    % tmp.DisplayName = '$\mathcal{F}_{cos} \oplus \mathcal{F}_{sin}$'; tmp.LineStyle = '--';
+    % uistack(tmp,'bottom');
+    % saveas(fig,strcat(subfolder,filesep,'plus_naive','.png'));
+    % set(p_plus,'Visible','off'); delete(tmp);
+    % close all
+
+
+    
 end
 
 
