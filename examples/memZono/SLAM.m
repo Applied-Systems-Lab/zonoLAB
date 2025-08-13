@@ -26,8 +26,7 @@ X_nom = cell(1,T);              % nominal state zonotope (no constraints)
 X = cell(1,T);                  % state zonotope with constraints
 x0 = [5;0];                     % initial state
 X0 = zono(0.01*eye(n),x0);      % initial state zonotope uncertainty
-X_nom{1} = memZono(X0,'x_0e');  % state zonotope initial condition (labeled)
-X_nom{1}.dimKeys = 'x_0e';      % label state zonotope initial dimensions (time-step zero)
+X_nom{1} = memZono(X0,'x_1e');  % state zonotope initial condition (labeled)
 X{1} = X_nom{1};                % state-landmark zonotope initial condition (labeled)
 x = zeros(n,T);                 % initialize array for actual state values to exist in
 x(:,1) = x0;                    % initial state
@@ -48,39 +47,35 @@ end
 
 
 %% simulation
-
+xDims = @(k) memZono.genKeys(sprintf('x_%ie',k),1:2);
+vKeys = @(k) sprintf('v_%ie',k);
+lDims = @(i) sprintf('L_%ie',i);
+lKeys = @(k,i) ['L_',num2str(k),'_',num2str(i)];
+lCons = @(k,i) sprintf('L%i_k%i',i,k);
 for k = 1:T     % loop over every time step 
 
     fprintf('--- k = %i -----------------\n',k-1)   % print time step
 
-    if k > 1                                                        % not initial condition
-        % u(:,k-1) = random_sample_zonotope(U);                     % determine actual input
-        mV = memZono(V,sprintf('v_%ie',k-1));                       % memZono version of the system uncertainty
-        newDimKeys = memZono.genKeys(sprintf('x_%ie',k-1),1:2);                          % create dimension keys for the new time step
-        X_nom{k} = X_nom{k-1}.transform([],F,{},newDimKeys) + mV.transform([],eye(2),{},newDimKeys);  % update state set factors
-        %X_nom{k}.c = X_nom{k}.c + G*u(:,k);                         % update state set center
-        x(:,k) = F*x(:,k-1) + G*u(:,k) + random_sample_zonotope(V); % determine actual state value
-        X{k} = [X{k-1}; X_nom{k}];                                  % insert next time step to state-landmark zonotope
+    if k > 1 % not initial condition
+        mV = memZono(V,xDims(k),vKeys(k-1)); % memZono version of the system uncertainty
+        X_nom{k} = X_nom{k-1}.map(F,xDims(k-1),xDims(k)) + mV; % determine actual state value (X_nom_{k} = F X_nom_{k-1} \oplus V)
+        X{k} = [X{k-1}; X_nom{k}]; % insert next time step to state-landmark zonotope
+        
+        x(:,k) = F*x(:,k-1) + G*u(:,k-1) + random_sample_zonotope(V); % determine actual state value
+        %(u is always 0...)
     end
 
     for i=1:num_l  % loop over each landmark
-
         r = landmarks{i}-x(:,k);    % actual vector displacement between vehicle and landmark
         theta = atan2(r(2),r(1));   % angle made relative to vehicle heading
 
-        if norm(r) <= landmark_radius               % vehicle can see landmark
-
+        if norm(r) <= landmark_radius  % vehicle can see landmark
             fprintf('k = %i --> Landmark %i\n',k-1,i);  % print time-step and landmark measured
             RH = rotate_zonotope(H,theta);              % rotated measurement noise zonotope
             r_m{k,i} = r + random_sample_zonotope(RH);  % noisy measurement of landmark
-            L{k,i} = RH + r_m{k,i};                     % set of landmark i from measurement at time-step k
-            L{k,i} = memZono(L{k,i},['L_',num2str(k-1),'_',num2str(i)]);    % label factors appropriately
-            L{k,i}.dimKeys = sprintf('x_%ie',k-1);                          % to ensure proper minkowski sum
-            L{k,i} = combine(X_nom{k},L{k,i});                              % add state uncertainty without constraints
-            L{k,i}.dimKeys = sprintf('L_%ie',i);                            % label dimensions properly
-            % add new landmark to zono by cartprod or generalized intersection
-            X{k} = X{k}.merge(L{k,i},sprintf('L%i_k%i',i,k));
-            % X{k} = [X{k}; L{k,i}];
+            L{k,i} = relabelDims(X_nom{k},xDims(k),lDims(i)) ... L_{k,i} = X_nom_{k} \oplus measuremnt...
+                + memZono(RH + r_m{k,i},lDims(i),lKeys(k,i)); % calculate landmark position from actual position and distance measurement (r_m and RH) ... L{k,i} = 
+            X{k} = X{k}.and(L{k,i}, lCons(k,i));% add new landmark to X{k}
         end
     end
 end
@@ -88,7 +83,7 @@ end
 
 %% plotting
 
-for k = 1:T % loop over every time step
+for k = 1:4%T % loop over every time step
 
     % open figure
     if mod(k,2) ~= 0
@@ -109,6 +104,8 @@ for k = 1:T % loop over every time step
         hold on         % allow multiple plots
     end
     title(sprintf('$k = %i$',k-1),'interpreter','Latex');
+    xlabel('x');
+    ylabel('y');
 
     % plot landmarks
     for i = 1:num_l
@@ -133,7 +130,7 @@ for k = 1:T % loop over every time step
 
         % plot zonotopes
         if last_measurement >= 1                        % ensure landmark has been measured
-            plot(X{k},X{k}.keysStartsWith(sprintf('L_%ie',i)).dimKeys,'r',0.6);    % plot landmark zonotope
+            plot(X{k},lDims(i),'r',0.6);    % plot landmark zonotope
             plot(landmarks{i}(1),landmarks{i}(2),'bx'); % plot landmarks accurate location
             drawnow;
         end       
@@ -142,8 +139,8 @@ for k = 1:T % loop over every time step
     % plot state zonotopes
     for prev_k = 1:k                                        % plot all previous time step states
         plot(x(1,prev_k),x(2,prev_k),'k.','MarkerSize',12); % plot actual state
-        plot(X_nom{prev_k},'all','k',0.2);                  % plot unconstrained state zonotope
-        plot(X{k},X{k}.keysStartsWith(sprintf('x_%ie',prev_k-1)).dimKeys,'g',0.3);     % plot constrained state zonotope
+        plot(X_nom{prev_k},xDims(prev_k),'k',0.2);                  % plot unconstrained state zonotope
+        plot(X{k},xDims(prev_k),'g',0.3);     % plot constrained state zonotope
         drawnow;
     end
     % xlim([-6 6]);ylim([-6 6]);
