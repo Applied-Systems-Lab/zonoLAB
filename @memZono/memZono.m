@@ -234,6 +234,9 @@ classdef memZono
         % &, and() - overide memoryIntersection w/ checks
         function out = and(obj1,obj2,sharedDimLabels)
             if nargin == 2, error('Must Supply labels for shared dimensions'); end
+            if ~isa(obj2,'memZono')
+                obj2 = memZono(obj2,sharedDimLabels); %<== attempt to call memZono with labels
+            end
             out = memoryIntersection(obj1,obj2,sharedDimLabels);
         end
         % Overide for memoryUnion w/ checks ... NOT IMPLIMENTED
