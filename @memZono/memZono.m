@@ -202,14 +202,17 @@ classdef memZono
         end
         out = linMap(in,M,inDims,outDims);
         out = funMap(obj1,obj2,inDims,outDims,lbl,funInDims,funOutDims);
-        function out = cartProdProjection(obj1,obj2,outDims)
-            out = projection(cartProd(obj1,obj2),outDims,"removeExtraFactors",true);
-        end
         % Plotting -------------------------
         varargout = plot(obj, dims, varargin);
         % Projection & Export ------------------
         out = projection(obj,dims,options); % projection according to dims
         function out = Z(obj,dims), out = projection(obj,dims).Z_; end
+        function out = cartProdProj(obj1,obj2,outDims)
+            out = projection(cartProd(obj1,obj2),outDims,"removeExtraFactors",true);
+        end
+        % function out = addCons(obj1,obj2) %<== adds cons from 2nd object w/out changing dims of 1st one
+        %     out = cartProdProj(obj1,obj2,obj1.dimKeys);
+        % end
         % Additional methods (implimentations of abstractZono methods in memZono)
         [NN,Y] = reluNN(X,Ws,bs,a);
         [s,x_out] = supportFunc(obj,dims,d_in);
