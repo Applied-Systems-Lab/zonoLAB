@@ -202,14 +202,17 @@ classdef memZono
         end
         out = linMap(in,M,inDims,outDims);
         out = funMap(obj1,obj2,inDims,outDims,lbl,funInDims,funOutDims);
+        function out = cartProdProjection(obj1,obj2,outDims)
+            out = projection(cartProd(obj1,obj2),outDims,"removeExtraFactors",true);
+        end
         % Plotting -------------------------
         varargout = plot(obj, dims, varargin);
         % Projection & Export ------------------
-        out = projection(obj,dims); % projection according to dims
+        out = projection(obj,dims,options); % projection according to dims
         function out = Z(obj,dims), out = projection(obj,dims).Z_; end
         % Additional methods (implimentations of abstractZono methods in memZono)
         [NN,Y] = reluNN(X,Ws,bs,a);
-        [s,x_out] = supportFunc(obj,dims,d_in)
+        [s,x_out] = supportFunc(obj,dims,d_in);
     end
 
     %% Indexing  ----------------------------
