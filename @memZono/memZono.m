@@ -263,7 +263,7 @@ classdef memZono
         end
         % all (extended and)
         function out = all(in,ptn)
-            out = in{1}; if isemtpy(ptn), ptn = 'all'; end
+            out = in{1}; if isempty(ptn), ptn = 'all'; end
             for i = 2:numel(in), out = and(out,in{i},sprintf('_%s_%d',ptn,i)); end %<========= not efficient
         end
         % any (extended or) ... NOT IMPLIMENTED
